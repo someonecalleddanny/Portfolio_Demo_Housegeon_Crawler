@@ -8,6 +8,16 @@
 void AHousegeon_Game_Base::StartPlay()
 {
 	Super::StartPlay();
+	
+	Generate_Dungeon();
+}
+
+void AHousegeon_Game_Base::Generate_Dungeon()
+{
+	//Restart all arrays (Debugging for now but might make feature, to re-generate the dungeon)
+	DungeonGridInfo = TArray<TArray<EDungeonGenerationType>>();
+	MyEndLocations = TArray<FEnd_Location_Data>();
+
 	//Start the dungeon generation by creating the walls which will then be replaced once generation starts
 	//(This function sets the size of DungeonGridInfo)
 	Create_Starter_Walls();

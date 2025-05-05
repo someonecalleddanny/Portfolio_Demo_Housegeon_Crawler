@@ -44,6 +44,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "C++ Generation Logic")
 	int Grid_Y_Size = 10;
+
+	UFUNCTION(BlueprintCallable, Category = "C++ Functions")
+	void Generate_Dungeon();
 	
 private:
 
