@@ -87,7 +87,7 @@ void AHISM_Generation::Display_All_Walls(TArray<TArray<EDungeonGenerationType>> 
 					//Check if the dungeon grid returns a wall enum type to generate a wall
 					if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Wall)
 					{
-						UE_LOG(LogTemp, Warning, TEXT("WALL FOUND TO Generate!"));
+						//UE_LOG(LogTemp, Warning, TEXT("WALL FOUND TO Generate!"));
 						WallTransform.SetLocation(Location);
 
 						//Get a random rotation on the z from 90 degree intervals on the Yaw
@@ -95,9 +95,20 @@ void AHISM_Generation::Display_All_Walls(TArray<TArray<EDungeonGenerationType>> 
 
 						HISM_Walls->AddInstance(WallTransform, true);
 					}
-					else
+					else if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Floor ||
+						DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Spawn ||
+						DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::EndPoint)
 					{
-						UE_LOG(LogTemp, Error, TEXT("NO WALL FOUND TO Generate!"));
+						//UE_LOG(LogTemp, Warning, TEXT("Floor FOUND TO Generate!"));
+						WallTransform.SetLocation(Location);
+
+						//Get a random rotation on the z from 90 degree intervals on the Yaw
+						WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
+
+						HISM_Floors->AddInstance(WallTransform, true);
+					}
+					{
+						//UE_LOG(LogTemp, Error, TEXT("NO WALL FOUND TO Generate!"));
 					}
 					//Once finished with column, got to the next one
 					Location.Y += 400.f;
