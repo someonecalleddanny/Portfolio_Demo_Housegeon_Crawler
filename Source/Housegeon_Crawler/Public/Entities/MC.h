@@ -9,6 +9,9 @@
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 
+#include "Dungeon_Generation/GS_DungeonGeneration.h"
+#include "Dungeon_Generation/EDungeonGenerationType.h"
+
 #include "Camera/CameraComponent.h" 
 #include "Components/CapsuleComponent.h"
 
@@ -32,6 +35,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "C++ Properties")
 	float Camera_Z = 70.f;
+
+	UFUNCTION()
+	void Spawn_At_Center_Grid();
+
+	UPROPERTY()
+	AGS_DungeonGeneration* myDungeonState;
 
 public:	
 	// Called every frame

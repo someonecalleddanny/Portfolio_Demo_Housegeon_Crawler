@@ -45,7 +45,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Capsule, meta = (AllowPrivateAccess = "true"))
 	UHierarchicalInstancedStaticMeshComponent* HISM_Floors;
 
-	void Display_All_Walls(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_PARAM);
+	void Display_Everything_From_Dungeon_Grid(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_PARAM);
 
 	FRotator Get_Random_Generation_Rotation();
 };

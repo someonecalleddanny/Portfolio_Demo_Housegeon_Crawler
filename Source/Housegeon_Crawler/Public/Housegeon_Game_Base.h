@@ -61,6 +61,21 @@ private:
 	//Dungeon path creation logic
 	void Create_Path_From_Start_To_End();
 
+	//Path Pattern Traversal Row First, Travel on the X first and then Y
+	void SpawnedLeft_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY);
+	void SpawnedRight_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY);
+	void SpawnedUp_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY);
+	void SpawnedUpDown_RowFirst_LineTraversal(bool bStartedFromUp, int StartX, int StartY, int EndX, int EndY);
+
+	void Go_Around_Spawn(int& ChangedX, int& ChangedY);
+	void Go_Around_Spawn_Vertical_Rated_Version(bool bStartedFromUp, int& ChangedX, int& ChangedY);
+
+	//Actually Create The Floor Path When Moving From The Path Patterns
+	void GO_LEFT(int &ChangedX, int UnMovedY);
+	void GO_RIGHT(int& ChangedX, int UnMovedY);
+	void GO_UP(int UnMovedX, int &ChangedY);
+	void GO_DOWN(int UnMovedX, int& ChangedY);
+
 	void Dungeon_Logic_Finished();
 
 	//Will hold all the end locations when making paths from a to b

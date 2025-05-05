@@ -3,6 +3,7 @@
 
 #include "Entities/MC.h"
 
+
 // Sets default values
 AMC::AMC()
 {
@@ -23,6 +24,44 @@ AMC::AMC()
 void AMC::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	//Get my dungeon state
+	myDungeonState = GetWorld()->GetGameState<AGS_DungeonGeneration>();
+
+	//Check if valid and I was not stupid to add it to the game mode base
+	if (myDungeonState)
+	{
+		//I found that starting generation in begin play caused glitches because the game state initted later than
+		//This actor, So I have a delegate within my dungeonstate that broadcasts once the 2d array is valid to be read
+		//from
+		myDungeonState->OnGridReady.AddDynamic(this, &AMC::Spawn_At_Center_Grid);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("NOOOT HISM GAME STATE FOUND TO DISPLAY DUNGEON GENERATION!"));
+	}
+}
+
+void AMC::Spawn_At_Center_Grid()
+{
+	//Get The dungeon state
+	TArray<TArray<EDungeonGenerationType>> DungeonGridInfo = myDungeonState->Get_Dungeon_Grid_Info();
+
+	//Check if the array is valid so no crashes
+	if (DungeonGridInfo.IsValidIndex(0)) 
+	{
+		if (DungeonGridInfo[0].IsValidIndex(0)) 
+		{
+			FVector Location;
+
+			//Each cube/cell is 400x400, by getting half the array size of grid = center
+			Location.X = (DungeonGridInfo.Num() / 2) * 400.f;
+			Location.Y = (DungeonGridInfo[0].Num() / 2) * 400.f;
+
+			SetActorLocation(FVector(Location));
+		}
+		
+	}
 	
 }
 

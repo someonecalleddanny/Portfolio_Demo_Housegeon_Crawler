@@ -46,10 +46,14 @@ void AHISM_Generation::Start_Generation()
 	//Start the dungeon gen
 	if (myDungeonState) 
 	{
-		UE_LOG(LogTemp, Warning, TEXT("HISM GAME STATE FOUND TO DISPLAY DUNGEON GENERATION!"));
-		Display_All_Walls(myDungeonState->Get_Dungeon_Grid_Info());
+		HISM_Walls->ClearInstances();
+		HISM_Floors->ClearInstances();
 
-		myDungeonState->OnGridReady.RemoveDynamic(this, &AHISM_Generation::Start_Generation);
+		UE_LOG(LogTemp, Warning, TEXT("HISM GAME STATE FOUND TO DISPLAY DUNGEON GENERATION!"));
+		Display_Everything_From_Dungeon_Grid(myDungeonState->Get_Dungeon_Grid_Info());
+
+		//Thinking of doing multiple dungeon gens in one session
+		//myDungeonState->OnGridReady.RemoveDynamic(this, &AHISM_Generation::Start_Generation);
 	}
 }
 
@@ -60,7 +64,7 @@ void AHISM_Generation::Tick(float DeltaTime)
 
 }
 
-void AHISM_Generation::Display_All_Walls(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_PARAM)
+void AHISM_Generation::Display_Everything_From_Dungeon_Grid(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_PARAM)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Wall Generation Started!"));
 
