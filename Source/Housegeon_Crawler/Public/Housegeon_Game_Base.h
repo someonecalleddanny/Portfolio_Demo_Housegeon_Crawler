@@ -45,6 +45,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "C++ Generation Logic")
 	int Grid_Y_Size = 10;
 
+	//When objects are being generated for the dungeon, have a forcefield offset from where they can spawn from the player spawn area
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "C++ Generation Logic")
+	int Spawn_Deadzone = 2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon POIs")
+	int Amount_Of_Dead_Ends = 4;
+
 	UFUNCTION(BlueprintCallable, Category = "C++ Functions")
 	void Generate_Dungeon();
 	
@@ -69,6 +76,12 @@ private:
 	void SpawnedRight_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY);
 	void SpawnedUp_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY);
 	void SpawnedUpDown_RowFirst_LineTraversal(bool bStartedFromUp, int StartX, int StartY, int EndX, int EndY);
+
+	//Path Pattern Row First: Stair Traversal (Go x amount on each axis before reaching end point)
+	void SpawnedLeft_RowFirst_StairTraversal(int StartX, int StartY, int EndX, int EndY, int X_Increment = 2, int Y_Increment = 2);
+	void SpawnedRight_RowFirst_StairTraversal(int StartX, int StartY, int EndX, int EndY, int X_Increment = 2, int Y_Increment = 2);
+
+	void DO_RowFirst_StairAlgorithm(int StartX, int StartY, int EndX, int EndY, int X_Increment = 2, int Y_Increment = 2);
 
 	void Go_Around_Spawn(int& ChangedX, int& ChangedY);
 	void Go_Around_Spawn_Vertical_Rated_Version(bool bStartedFromUp, int& ChangedX, int& ChangedY);

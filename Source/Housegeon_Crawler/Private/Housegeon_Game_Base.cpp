@@ -24,7 +24,7 @@ void AHousegeon_Game_Base::Generate_Dungeon()
 
 	Create_Spawn_To_End();
 
-	Create_Dead_End(4);
+	Create_Dead_End(Amount_Of_Dead_Ends);
 
 	//Create all the a to b paths that were put in an array from the created b points in the functions above
 	Create_Path_From_Start_To_End();
@@ -116,8 +116,8 @@ void AHousegeon_Game_Base::Create_Dead_End(int Amount)
 		for (int Tries = 0; Tries < MaxTries; Tries++) 
 		{
 			//Check if the random spawn is not within a certain bound of the spawn area
-			if (!(RandX >= (Grid_X_Size / 2) - 2 && RandX <= (Grid_X_Size / 2) + 2
-				&& RandY >= (Grid_Y_Size / 2) - 2 && RandY <= (Grid_Y_Size / 2) + 2)) 
+			if (!(RandX >= (Grid_X_Size / 2) - Spawn_Deadzone && RandX <= (Grid_X_Size / 2) + Spawn_Deadzone
+				&& RandY >= (Grid_Y_Size / 2) - Spawn_Deadzone && RandY <= (Grid_Y_Size / 2) + Spawn_Deadzone))
 			{
 				//Check if wall, if POI or endpoint etc, I don't want to replace them
 				if (DungeonGridInfo[RandX][RandY] == EDungeonGenerationType::Wall)
@@ -191,7 +191,7 @@ void AHousegeon_Game_Base::Create_Path_From_Start_To_End()
 		Player_Start_Column = Grid_Y_Size / 2;
 
 		int Player_Start_Random = FMath::RandRange(0, 3); //Random start location
-		Player_Start_Random = 2; //Debugging Number Thing
+		Player_Start_Random = 1; //Debugging Number Thing
 
 		//Pick randomly from the playerstart a start location. Goes clockwise starting from up
 		switch (Player_Start_Random)
@@ -235,7 +235,9 @@ void AHousegeon_Game_Base::Create_Path_From_Start_To_End()
 
 		//Randomly pick if being Row Traversal, set as a variable for help whilst debugging the patterns
 		bool bRowTraversalFirst = FMath::RandBool();
+		bool bLineTraversal = FMath::RandBool();
 		bRowTraversalFirst = true;
+		bLineTraversal = false;
 
 		if (bRowTraversalFirst)
 		{
@@ -244,13 +246,35 @@ void AHousegeon_Game_Base::Create_Path_From_Start_To_End()
 			switch (PathMoved) 
 			{
 			case EPath_Moved::LEFT:
-				SpawnedLeft_RowFirst_LineTraversal(Player_Start_Row, Player_Start_Column,
-					MyEndLocations[i].X, MyEndLocations[i].Y);
+
+				if (bLineTraversal)
+				{
+					SpawnedLeft_RowFirst_LineTraversal(Player_Start_Row, Player_Start_Column,
+						MyEndLocations[i].X, MyEndLocations[i].Y);
+				}
+				else 
+				{
+					//Stair traversal, randomly choose between 2 and 3 on x and y to do a stair like pattern to coord
+					SpawnedLeft_RowFirst_StairTraversal(Player_Start_Row, Player_Start_Column,
+						MyEndLocations[i].X, MyEndLocations[i].Y, FMath::RandRange(2,3), FMath::RandRange(2, 3));
+				}
+
 				break;
 
 			case EPath_Moved::RIGHT:
-				SpawnedRight_RowFirst_LineTraversal(Player_Start_Row, Player_Start_Column,
-					MyEndLocations[i].X, MyEndLocations[i].Y);
+
+				if (bLineTraversal) 
+				{
+					SpawnedRight_RowFirst_LineTraversal(Player_Start_Row, Player_Start_Column,
+						MyEndLocations[i].X, MyEndLocations[i].Y);
+				}
+				else 
+				{
+					//Stair traversal, randomly choose between 2 and 3 on x and y to do a stair like pattern to coord
+					SpawnedRight_RowFirst_StairTraversal(Player_Start_Row, Player_Start_Column,
+						MyEndLocations[i].X, MyEndLocations[i].Y, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
+				}
+				
 				break;
 
 			case EPath_Moved::UP:
@@ -488,42 +512,158 @@ void AHousegeon_Game_Base::SpawnedUpDown_RowFirst_LineTraversal(bool bStartedFro
 		//Once it is equal, meaning, you reached the coord, the while loop breaks because it reached the condition
 		(StartY > EndY)? GO_UP(StartX, StartY) : GO_DOWN(StartX, StartY);
 	}
+}
 
-	/*
-	//if the ax is less than bx, that means that you have to go right
-	if (StartX < EndX)
+void AHousegeon_Game_Base::SpawnedLeft_RowFirst_StairTraversal(int StartX, int StartY, int EndX, int EndY, int X_Increment, int Y_Increment)
+{
+	// Validate bounds, if not, return which stops all logic from below from happening
+	if (!DungeonGridInfo.IsValidIndex(StartX) || !DungeonGridInfo.IsValidIndex(EndX)) return;
+	if (!DungeonGridInfo[StartX].IsValidIndex(StartY) || !DungeonGridInfo[EndX].IsValidIndex(EndY)) return;
+
+	if (!(EndX < StartX)) //if end x is less means it's to the left, simplest check as stair won't intefere with spawn area
 	{
-		//Since you already spawned from the right, you don't have to go around spawn
-		while (StartX != EndX)
+		//Here is where all the confusing code is to bypass the center before doing the stair traversal
+
+		//If the endx is larger means to the right which means spawn is behind you + Need to check if it fits
+		//Within the small chunk where the 3x3 spawn casts its shadow (metaphor at the end)
+		//Picture the entire spawn leaving a whole space that you have to go all the way around to reach its behind
+		if (EndX > StartX && EndY > (Grid_Y_Size / 2) - (Spawn_Deadzone + 1)
+			&& EndY < (Grid_Y_Size / 2) + (Spawn_Deadzone + 1)) 
 		{
-			//Keep going right until start x and end x are equal
-			GO_RIGHT(StartX, StartY);
-		}
-	}
-	else if (StartX > EndX)//Going left if StartX is bigger than EndX
-	{
-		while (StartX != EndX)
-		{
+			//Go left one more time to leave a nice gap between spawn
 			GO_LEFT(StartX, StartY);
+
+			bool bCoinFlip = FMath::RandBool();
+
+			//Go 3 up or down to bypass spawn before going horizontal
+			for (int i = 0; i < 3; i++) 
+			{
+				//Do a coinflip to choose whether to do up or down
+				(bCoinFlip) ? GO_UP(StartX, StartY) : GO_DOWN(StartX, StartY);
+			}
+
+			//So keep going right until you reach the outmost edge of the 3x3 spawn
+			while (StartX < (Grid_X_Size / 2) + Spawn_Deadzone)
+			{
+				GO_RIGHT(StartX, StartY);
+			}
+		}
+		else //The last areas of the grid which are the top and bottom half that I need to bypass so the 3x3 is not overlapped
+		{
+			//Check whether the stair has to go to the top half or the bottom half of the grid
+			bool bGoUp = (StartY > EndY);
+
+			//Idea here is to go left to the quarter of the grid, and the stair traversel will eventually go up/down 3x3 spawn
+			while (StartX != Grid_X_Size / 4)
+			{
+				GO_LEFT(StartX, StartY);
+			}
+
+			//Go Two down so the path is nice
+			for (int i = 0; i < 2; i++)
+			{
+				if (bGoUp)
+				{
+					GO_UP(StartX, StartY);
+				}
+				else 
+				{
+					GO_DOWN(StartX, StartY);
+				}
+				
+			}
+		}
+
+	}
+
+	//Once done with every check possible to bypass the 3x3 spawn, do the stair algorithm
+	DO_RowFirst_StairAlgorithm(StartX, StartY, EndX, EndY, X_Increment, Y_Increment);
+}
+
+void AHousegeon_Game_Base::SpawnedRight_RowFirst_StairTraversal(int StartX, int StartY, int EndX, int EndY, int X_Increment, int Y_Increment)
+{
+	// Validate bounds, if not, return which stops all logic from below from happening
+	if (!DungeonGridInfo.IsValidIndex(StartX) || !DungeonGridInfo.IsValidIndex(EndX)) return;
+	if (!DungeonGridInfo[StartX].IsValidIndex(StartY) || !DungeonGridInfo[EndX].IsValidIndex(EndY)) return;
+
+	if (!(EndX > StartX)) //if end x is bigger means it's to the right, simplest check as stair won't intefere with spawn area
+	{
+		//Do the Complex logic if you have to go around the 3x3 spawn
+
+		//If the endx is smaller means to the left which means spawn is behind you + Need to check if it fits
+		//Within the small chunk where the 3x3 spawn casts its shadow (metaphor at the end)
+		//Picture the entire spawn leaving a whole space that you have to go all the way around to reach its behind
+		if (EndX < StartX && EndY >(Grid_Y_Size / 2) - (Spawn_Deadzone + 1)
+			&& EndY < (Grid_Y_Size / 2) + (Spawn_Deadzone + 1))
+		{
+			//Go Right one more time to leave a nice gap between spawn
+			GO_RIGHT(StartX, StartY);
+
+			bool bCoinFlip = FMath::RandBool();
+
+			//Go 3 up or down to bypass spawn before going horizontal
+			for (int i = 0; i < 3; i++)
+			{
+				//Do a coinflip to choose whether to do up or down
+				(bCoinFlip) ? GO_UP(StartX, StartY) : GO_DOWN(StartX, StartY);
+			}
+
+			//So keep going left until you reach the outmost left edge of the 3x3 spawn
+			while (StartX > (Grid_X_Size / 2) - Spawn_Deadzone)
+			{
+				GO_LEFT(StartX, StartY);
+			}
+		}
+		else //The last areas of the grid which are the top and bottom half that I need to bypass so the 3x3 is not overlapped
+		{
+			//Check whether the stair has to go to the top half or the bottom half of the grid
+			bool bGoUp = (StartY > EndY);
+
+			//Idea here is to go to the right 3/4 of the grid, and the stair traversel will eventually go up/down
+			// 3x3 spawn Whilst going right
+			while (StartX != (Grid_X_Size * 3) / 4 )
+			{
+				GO_RIGHT(StartX, StartY);
+			}
+
+			//Go Two down so the path is nice
+			for (int i = 0; i < 2; i++)
+			{
+				if (bGoUp)
+				{
+					GO_UP(StartX, StartY);
+				}
+				else
+				{
+					GO_DOWN(StartX, StartY);
+				}
+
+			}
 		}
 	}
 
-	if (StartY > EndY) //If Start Y is bigger means that it is below meaning that it has to go up
+	//Once done with every check possible to bypass the 3x3 spawn, do the stair algorithm
+	DO_RowFirst_StairAlgorithm(StartX, StartY, EndX, EndY, X_Increment, Y_Increment);
+}
+
+void AHousegeon_Game_Base::DO_RowFirst_StairAlgorithm(int StartX, int StartY, int EndX, int EndY, int X_Increment, int Y_Increment)
+{
+	//So, While the start coords are not equal keep doing the stair loops until reaching destination
+	while (StartX != EndX || StartY != EndY)
 	{
-		while (StartY != EndY)
+		//So repeat the x traversal by the x_increment or until the startx is == to end x because don't want to keep looping
+		for (int x = 0; x < X_Increment && StartX != EndX; x++)
 		{
-			GO_UP(StartX, StartY);
+			//if end x is less than start x, means that you have to go left, else = inverse
+			(EndX < StartX) ? GO_LEFT(StartX, StartY) : GO_RIGHT(StartX, StartY);
+		}
+
+		for (int y = 0; y < Y_Increment && StartY != EndY; y++)
+		{
+			//if end y lower, means that you have to go lower y index, going up, inverse for going down
+			(EndY < StartY) ? GO_UP(StartX, StartY) : GO_DOWN(StartX, StartY);
 		}
 	}
-	else if (StartY < EndY) //If the Start Y is less, means that it is on top of End Y and needs to go down
-	{
-		while (StartY != EndY)
-		{
-			GO_DOWN(StartX, StartY);
-		}
-	}
-	*/
-	
 }
 
 void AHousegeon_Game_Base::Go_Around_Spawn(int& ChangedX, int& ChangedY)
