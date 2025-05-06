@@ -57,6 +57,7 @@ void AMC::Spawn_At_Center_Grid()
 			//Each cube/cell is 400x400, by getting half the array size of grid = center
 			Location.X = (DungeonGridInfo.Num() / 2) * 400.f;
 			Location.Y = (DungeonGridInfo[0].Num() / 2) * 400.f;
+			Location.Z = 88.f;
 
 			SetActorLocation(FVector(Location));
 		}

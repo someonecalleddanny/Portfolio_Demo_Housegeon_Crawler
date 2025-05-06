@@ -68,8 +68,10 @@ private:
 
 	void Set_Random_End_XY(int& EndX, int& EndY);
 
-	//Dungeon path creation logic
+	//Dungeon path creation logic, picks the type of path traversal to reach from a to b
 	void Create_Path_From_Start_To_End();
+	void Pick_Random_Row_Traversal(EPath_Moved PathMoved, bool bLineTraversal, int Player_Start_Row, int Player_Start_Column,
+		int EndX, int EndY);
 
 	//Path Pattern Traversal Row First, Travel on the X first and then Y
 	void SpawnedLeft_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY);
@@ -80,11 +82,20 @@ private:
 	//Path Pattern Row First: Stair Traversal (Go x amount on each axis before reaching end point)
 	void SpawnedLeft_RowFirst_StairTraversal(int StartX, int StartY, int EndX, int EndY, int X_Increment = 2, int Y_Increment = 2);
 	void SpawnedRight_RowFirst_StairTraversal(int StartX, int StartY, int EndX, int EndY, int X_Increment = 2, int Y_Increment = 2);
+	void SpawnedUpDown_RowFirst_StairTraversal(bool bStartedFromUp, int StartX, int StartY, int EndX, int EndY, int X_Increment = 2, int Y_Increment = 2);
 
 	void DO_RowFirst_StairAlgorithm(int StartX, int StartY, int EndX, int EndY, int X_Increment = 2, int Y_Increment = 2);
 
+	//The column first path traversals, travel along the y first and then the x to reach coord
+	void SpawnedLeftRight_ColumnFirst_LineTraversal(bool bStartedFromLeft, int StartX, int StartY, int EndX, int EndY);
+
+	//The helper functions to go around the 3x3 spawns for the traversal algorithms
 	void Go_Around_Spawn(int& ChangedX, int& ChangedY);
 	void Go_Around_Spawn_Vertical_Rated_Version(bool bStartedFromUp, int& ChangedX, int& ChangedY);
+	void Go_Around_Spawn_VerticalStair_Rated_Version(bool bStartedFromUp, int& ChangedX, int& ChangedY);
+
+	//helper functions to go around spawn when doing column based traversal
+	void Go_Around_Spawn_ColumnBased_LeftRight(bool bStartedFromLeft, int& ChangedX, int& ChangedY);
 
 	//Actually Create The Floor Path When Moving From The Path Patterns
 	void GO_LEFT(int &ChangedX, int UnMovedY);

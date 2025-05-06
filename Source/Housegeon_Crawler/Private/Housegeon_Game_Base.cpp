@@ -183,6 +183,8 @@ void AHousegeon_Game_Base::Create_Path_From_Start_To_End()
 	//Path moved from center up, down, left right (Randomly)
 	EPath_Moved PathMoved; 
 
+	//Step 1: Choose a random spawn location from the spawn center which will then be used to move from a to b
+
 	//I go through all the end locations and then create paths for all of them
 	for (int i = 0; i < MyEndLocations.Num(); i++) 
 	{
@@ -233,68 +235,155 @@ void AHousegeon_Game_Base::Create_Path_From_Start_To_End()
 		//Create the first floor to the a to b path algorithm as the function below will build the floor from this
 		DungeonGridInfo[Player_Start_Row][Player_Start_Column] = EDungeonGenerationType::Floor;
 
+		//Step 2: Pick whether the algorithm should go row first or column first and then choose the traversal pattern
+		//...to the end point
+
 		//Randomly pick if being Row Traversal, set as a variable for help whilst debugging the patterns
 		bool bRowTraversalFirst = FMath::RandBool();
+		//Randomly pick if the traversal type will be a line or not
 		bool bLineTraversal = FMath::RandBool();
-		bRowTraversalFirst = true;
-		bLineTraversal = false;
+		//Debugging
+		bRowTraversalFirst = false;
+		bLineTraversal = true;
 
+		//Step 3: Now, create the paths from a to b with the path algorithms I created
+
+		//check if row traversal is picked (going x and then y to desired coord)
 		if (bRowTraversalFirst)
 		{
 			UE_LOG(LogTemp, Display, TEXT("Picked Row Traversal First For Path Pattern!"));
 
-			switch (PathMoved) 
-			{
-			case EPath_Moved::LEFT:
-
-				if (bLineTraversal)
-				{
-					SpawnedLeft_RowFirst_LineTraversal(Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y);
-				}
-				else 
-				{
-					//Stair traversal, randomly choose between 2 and 3 on x and y to do a stair like pattern to coord
-					SpawnedLeft_RowFirst_StairTraversal(Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y, FMath::RandRange(2,3), FMath::RandRange(2, 3));
-				}
-
-				break;
-
-			case EPath_Moved::RIGHT:
-
-				if (bLineTraversal) 
-				{
-					SpawnedRight_RowFirst_LineTraversal(Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y);
-				}
-				else 
-				{
-					//Stair traversal, randomly choose between 2 and 3 on x and y to do a stair like pattern to coord
-					SpawnedRight_RowFirst_StairTraversal(Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
-				}
-				
-				break;
-
-			case EPath_Moved::UP:
-				SpawnedUpDown_RowFirst_LineTraversal(true, Player_Start_Row, Player_Start_Column,
-					MyEndLocations[i].X, MyEndLocations[i].Y);
-				break;
-
-			case EPath_Moved::DOWN:
-				SpawnedUpDown_RowFirst_LineTraversal(false, Player_Start_Row, Player_Start_Column,
-					MyEndLocations[i].X, MyEndLocations[i].Y);
-				break;
-			}
+			Pick_Random_Row_Traversal(PathMoved, bLineTraversal, Player_Start_Row, Player_Start_Column,
+				MyEndLocations[i].X, MyEndLocations[i].Y);
 		}
 		else 
 		{
 			UE_LOG(LogTemp, Display, TEXT("Picked Column Traversal First For Path Pattern!"));
+
+			//Check where the spawn was for the path to start as the algorithms differ slightly as they have to move
+			//Around the 3x3 spawn to make the paths more structured and beautiful
+			switch (PathMoved)
+			{
+				//Spawned left
+			case EPath_Moved::LEFT:
+
+				if (bLineTraversal)
+				{
+					//Do column first line traversal algorithm, input true at start because starting from left
+					SpawnedLeftRight_ColumnFirst_LineTraversal(true, Player_Start_Row, Player_Start_Column,
+						MyEndLocations[i].X, MyEndLocations[i].Y);
+				}
+				else
+				{
+				}
+
+				break;
+
+				//Spawned Right
+			case EPath_Moved::RIGHT:
+				if (bLineTraversal)
+				{
+					//Do column first line traversal algorithm input false at start because starting from right
+					SpawnedLeftRight_ColumnFirst_LineTraversal(false, Player_Start_Row, Player_Start_Column,
+						MyEndLocations[i].X, MyEndLocations[i].Y);
+				}
+				else
+				{
+				}
+				break;
+
+				//Spawned Up
+			case EPath_Moved::UP:
+
+				break;
+
+				//Spawned Down
+			case EPath_Moved::DOWN:
+
+				break;
+			}
 		}
 		
 
 
+	}
+}
+
+void AHousegeon_Game_Base::Pick_Random_Row_Traversal(EPath_Moved PathMoved, bool bLineTraversal,
+	int Player_Start_Row, int Player_Start_Column, int EndX, int EndY)
+{
+
+	//Check where the spawn was for the path to start as the algorithms differ slightly as they have to move
+	//Around the 3x3 spawn to make the paths more structured and beautiful
+	switch (PathMoved)
+	{
+		//Spawned left
+	case EPath_Moved::LEFT:
+
+		if (bLineTraversal)
+		{
+			//Line traversal, Go until start x == to end x, then go until start y == end y
+			SpawnedLeft_RowFirst_LineTraversal(Player_Start_Row, Player_Start_Column, EndX, EndY);
+		}
+		else
+		{
+			//Stair traversal, randomly choose between 2 and 3 on x and y to do a stair like pattern to coord
+			SpawnedLeft_RowFirst_StairTraversal(Player_Start_Row, Player_Start_Column,
+				EndX, EndY, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
+		}
+
+		break;
+
+		//Spawned Right
+	case EPath_Moved::RIGHT:
+
+		if (bLineTraversal)
+		{
+			//Line traversal, Go until start x == to end x, then go until start y == end y
+			SpawnedRight_RowFirst_LineTraversal(Player_Start_Row, Player_Start_Column, EndX, EndY);
+		}
+		else
+		{
+			//Stair traversal, randomly choose between 2 and 3 on x and y to do a stair like pattern to coord
+			SpawnedRight_RowFirst_StairTraversal(Player_Start_Row, Player_Start_Column,
+				EndX, EndY, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
+		}
+
+		break;
+
+		//Spawned Up
+	case EPath_Moved::UP:
+
+		if (bLineTraversal)
+		{
+			//Line traversal, Go until start x == to end x, then go until start y == end y
+			SpawnedUpDown_RowFirst_LineTraversal(true, Player_Start_Row, Player_Start_Column, EndX, EndY);
+		}
+		else
+		{
+			//Stair traversal, randomly choose between 2 and 3 on x and y to do a stair like pattern to coord
+			SpawnedUpDown_RowFirst_StairTraversal(true, Player_Start_Row, Player_Start_Column,
+				EndX, EndY, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
+		}
+
+		break;
+
+		//Spawned Down
+	case EPath_Moved::DOWN:
+
+		if (bLineTraversal)
+		{
+			//Line traversal, Go until start x == to end x, then go until start y == end y
+			SpawnedUpDown_RowFirst_LineTraversal(false, Player_Start_Row, Player_Start_Column, EndX, EndY);
+		}
+		else
+		{
+			//Stair traversal, randomly choose between 2 and 3 on x and y to do a stair like pattern to coord
+			SpawnedUpDown_RowFirst_StairTraversal(false, Player_Start_Row, Player_Start_Column,
+				EndX, EndY, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
+		}
+
+		break;
 	}
 }
 
@@ -646,6 +735,95 @@ void AHousegeon_Game_Base::SpawnedRight_RowFirst_StairTraversal(int StartX, int 
 	DO_RowFirst_StairAlgorithm(StartX, StartY, EndX, EndY, X_Increment, Y_Increment);
 }
 
+void AHousegeon_Game_Base::SpawnedUpDown_RowFirst_StairTraversal(bool bStartedFromUp, int StartX, int StartY, int EndX, int EndY, int X_Increment, int Y_Increment)
+{
+	// Validate bounds, if not, return which stops all logic from below from happening
+	if (!DungeonGridInfo.IsValidIndex(StartX) || !DungeonGridInfo.IsValidIndex(EndX)) return;
+	if (!DungeonGridInfo[StartX].IsValidIndex(StartY) || !DungeonGridInfo[EndX].IsValidIndex(EndY)) return;
+
+	//forward declare the variable
+	bool bMovedUpNeedMoveAround = false;
+
+	if (bStartedFromUp) 
+	{
+		//First move up one to leave a nice gap
+		GO_UP(StartX, StartY);
+
+		//Check if the EndY is on the other side from where started
+		//First check if the EndY is greater than StartY as that means its behind (3x3 spawn behind as well)
+		if (EndY > (StartY + 1)) //Do +1 because just moved up (Remember moving up is - so going back is +)
+		{
+			//Check if the End Y coord is on the opposite side of the 3x3 spawn
+			//The y grid size + deadzone is used because if the y is within the 3x3 spawn shadow, do a check with
+			//bMovedUpNeedMoveAround to see which center-ish side the path will have to go to
+			if (EndY > (Grid_Y_Size / 2) + Spawn_Deadzone) //Deadzone is the area to which POIs can't spawn next to spawn
+			{
+				//function to go from one half of the grid to the other when the endY is on opposite side of 3x3 spawn
+				//Passes StartY and StartX as reference so they will be changed when inputted
+				Go_Around_Spawn_VerticalStair_Rated_Version(bStartedFromUp, StartX, StartY);
+			}
+			//if not on other side of grid but within the shadow of the row of 3x3 spawn, need to check later
+			else 
+			{
+				bMovedUpNeedMoveAround = true;
+			}
+		}
+	}
+	else 
+	{
+		//First move down one to leave a nice gap
+		GO_DOWN(StartX, StartY);
+
+		//This means that the End Y is on the opposite side of the grid meaning you have to around 3x3 spawn
+		if (EndY < (StartY - 1)) 
+		{
+			//Check if the End Y coord is on the opposite side of the 3x3 spawn
+			//The y grid size + deadzone is used because if the y is within the 3x3 spawn shadow, do a check with
+			//bMovedUpNeedMoveAround to see which center-ish side the path will have to go to
+			if (EndY < (Grid_Y_Size / 2) - Spawn_Deadzone) //Deadzone is the area to which POIs can't spawn next to spawn
+			{
+				//function to go from one half of the grid to the other when the endY is on opposite side of 3x3 spawn
+				//Passes StartY and StartX as reference so they will be changed when inputted
+				Go_Around_Spawn_VerticalStair_Rated_Version(bStartedFromUp, StartX, StartY);
+			}
+			//if not on other side of grid but within the shadow of the row of 3x3 spawn, need to check later
+			else
+			{
+				bMovedUpNeedMoveAround = true;
+			}
+		}
+	}
+	
+	//This is the check regardless if spawned up or down, since the problem of the center 3x3 spawn shadow affects both...
+	//...Move the path around the 3x3 spawn to the correct area to where the 3x3 row shadow inhabits
+	if (bMovedUpNeedMoveAround)
+	{
+		//if the endx is within the left middle of grid but within shadow of 3x3 spawn
+		if (EndX < (Grid_X_Size / 2) - Spawn_Deadzone) 
+		{
+			//keep going left until you reach the top left of 3x3 spawn + forcefield (Added -1 because I use != condition...
+			//...for while loop)
+			while (StartX != (Grid_X_Size / 2) - Spawn_Deadzone - 1) 
+			{
+				GO_LEFT(StartX, StartY);
+			}
+		}
+		else if (EndX > (Grid_X_Size / 2) + Spawn_Deadzone) 
+		{
+			//keep going Right until you reach the top right of 3x3 spawn + forcefield (Added +1 because I use != condition...
+			//...for while loop)
+			while (StartX != (Grid_X_Size / 2) + Spawn_Deadzone + 1)
+			{
+				GO_RIGHT(StartX, StartY);
+			}
+		}
+	}
+
+	//Once done with every check possible to bypass the 3x3 spawn, do the stair algorithm
+	DO_RowFirst_StairAlgorithm(StartX, StartY, EndX, EndY, X_Increment, Y_Increment);
+}
+
+
 void AHousegeon_Game_Base::DO_RowFirst_StairAlgorithm(int StartX, int StartY, int EndX, int EndY, int X_Increment, int Y_Increment)
 {
 	//So, While the start coords are not equal keep doing the stair loops until reaching destination
@@ -662,6 +840,72 @@ void AHousegeon_Game_Base::DO_RowFirst_StairAlgorithm(int StartX, int StartY, in
 		{
 			//if end y lower, means that you have to go lower y index, going up, inverse for going down
 			(EndY < StartY) ? GO_UP(StartX, StartY) : GO_DOWN(StartX, StartY);
+		}
+	}
+}
+
+void AHousegeon_Game_Base::SpawnedLeftRight_ColumnFirst_LineTraversal(bool bStartedFromLeft, int StartX, int StartY, int EndX, int EndY)
+{
+	// Validate bounds, if not, return which stops all logic from below from happening
+	if (!DungeonGridInfo.IsValidIndex(StartX) || !DungeonGridInfo.IsValidIndex(EndX)) return;
+	if (!DungeonGridInfo[StartX].IsValidIndex(StartY) || !DungeonGridInfo[EndX].IsValidIndex(EndY)) return;
+
+	//The spawned left and right functions are pretty similar so don't really need to be seperate functions
+
+	if (bStartedFromLeft) 
+	{
+		//Go one more left to make nice path
+		GO_LEFT(StartX, StartY);
+
+		//if the end x is to the right of the path (behind) as well as being in the 3x3 spawn shadow bounds,
+		//Go around the 3x3 Spawn
+		if (EndX > StartX + 1 //+ 1 because just moved left
+			&& EndY > (Grid_Y_Size / 2) - Spawn_Deadzone - 1
+			&& EndY < (Grid_Y_Size / 2) + Spawn_Deadzone + 1)
+		{
+			Go_Around_Spawn_ColumnBased_LeftRight(bStartedFromLeft, StartX, StartY);
+		}
+
+	}
+	else //This means you started on the right
+	{
+		//one more to right to make nice path
+		GO_RIGHT(StartX, StartY);
+
+		//if the end x is to the left of the path (behind) as well as being in the 3x3 spawn shadow bounds,
+		//Go around the 3x3 Spawn
+		if (EndX < StartX - 1 //- 1 because just moved right
+			&& EndY > (Grid_Y_Size / 2) - Spawn_Deadzone - 1
+			&& EndY < (Grid_Y_Size / 2) + Spawn_Deadzone + 1)
+		{
+			Go_Around_Spawn_ColumnBased_LeftRight(bStartedFromLeft, StartX, StartY);
+		}
+	}
+
+	//now just do the algorithm to move column and then row
+	while (StartY != EndY) 
+	{
+		//if start y is less that means it is above it and must go down
+		if (StartY < EndY) 
+		{
+			GO_DOWN(StartX, StartY);
+		}
+		else //do inverse by going up, if starty and endy become equal, while loop breaks
+		{
+			GO_UP(StartX, StartY);
+		}
+	}
+	//Now do Row traversal
+	while (StartX != EndX)
+	{
+		//if start x is less that means it is to the left and must go right
+		if (StartX < EndX)
+		{
+			GO_RIGHT(StartX, StartY);
+		}
+		else //do inverse by going left, if starty and endy become equal, while loop breaks
+		{
+			GO_LEFT(StartX, StartY);
 		}
 	}
 }
@@ -728,6 +972,113 @@ void AHousegeon_Game_Base::Go_Around_Spawn_Vertical_Rated_Version(bool bStartedF
 		for (int i = 0; i < 7; i++)
 		{
 			GO_UP(ChangedX, ChangedY);
+		}
+	}
+}
+
+void AHousegeon_Game_Base::Go_Around_Spawn_VerticalStair_Rated_Version(bool bStartedFromUp, int& ChangedX, int& ChangedY)
+{
+	//Since it is on the other half of the grid, I can make some cool patterns to reach it before doing stair pattern
+	//So I kinda have the creative liberty here, and I decided to make 4 x spots to go around the 3x3 to make
+	//generation more juicy
+
+	// Step 1: Move left or right to offset from spawn center horizontally
+
+	//Rand bool to check whether to go left or right
+	if (FMath::RandBool())
+	{
+		//Another rand bool to check whether to slightly go over the edge of 3x3 or to 1/4 or 3/4 of grid
+		if (FMath::RandBool())
+		{
+			//Idea here is to go to the right 3/4 of the grid, and the stair traversel will eventually go up/down
+			// 3x3 spawn Whilst going right
+			while (ChangedX != (Grid_X_Size * 3) / 4)
+			{
+				GO_RIGHT(ChangedX, ChangedY);
+			}
+		}
+		else
+		{
+			while (ChangedX != (Grid_X_Size / 2) + Spawn_Deadzone + 1)
+			{
+				GO_RIGHT(ChangedX, ChangedY);
+			}
+		}
+	}
+	else //going to the left
+	{
+		//Another rand bool to check whether to slightly go over the edge of 3x3 or to 1/4 or 3/4 of grid
+		if (FMath::RandBool())
+		{
+			//Idea here is to go to the 1/4 x of grid, and the stair traversel will eventually go up/down
+			while (ChangedX != Grid_X_Size / 4)
+			{
+				GO_LEFT(ChangedX, ChangedY);
+			}
+		}
+		else
+		{
+			//Go to the top left edge + forcefield of the 3x3 spawn area to make beautiful path
+			while (ChangedX != (Grid_X_Size / 2) - Spawn_Deadzone - 1)
+			{
+				GO_LEFT(ChangedX, ChangedY);
+			}
+		}
+	}
+
+	// Step 2: Move vertically to reach other side of spawn
+
+	if (bStartedFromUp) //do this if started from top of 3x3 spawn
+	{
+		//Once done with choosing the xcoord to bypass the 3x3 spawn, have to go down to reach other grid half
+		while (ChangedY != (Grid_Y_Size / 2) + Spawn_Deadzone + 1)
+		{
+			GO_DOWN(ChangedX, ChangedY);
+		}
+	}
+	else //Do this to go around when starting from the bottom
+	{
+		while (ChangedY != (Grid_Y_Size / 2) - Spawn_Deadzone - 1) 
+		{
+			GO_UP(ChangedX, ChangedY);
+		}
+	}
+}
+
+void AHousegeon_Game_Base::Go_Around_Spawn_ColumnBased_LeftRight(bool bStartedFromLeft, int& ChangedX, int& ChangedY)
+{
+	//Choose randomly to whether go up or down before traversing on row to the 3x3 shadow zone
+	if (FMath::RandBool())
+	{
+		//While start y is not equal to the bottom of the 3x3 spawn keep going down until you reach it
+		while (ChangedY != Grid_Y_Size / 2 + Spawn_Deadzone + 1)
+		{
+			GO_DOWN(ChangedX, ChangedY);
+		}
+	}
+	else
+	{
+		//While start y is not equal to the top of the 3x3 spawn keep going up until you reach it
+		while (ChangedY != Grid_Y_Size / 2 - Spawn_Deadzone - 1)
+		{
+			GO_UP(ChangedX, ChangedY);
+		}
+	}
+
+	if (bStartedFromLeft)
+	{
+		//Keep going right until you reach the right edge of the 3x3 spawn square to finally bypass it
+		while (ChangedX != (Grid_X_Size / 2) + Spawn_Deadzone + 1)
+		{
+			GO_RIGHT(ChangedX, ChangedY);
+		}
+	}
+	else //This means you started on the right
+	{
+		//Keep going left until you reach the left edge of the 3x3 spawn square to finally bypass it
+		while (ChangedX != (Grid_X_Size / 2) - Spawn_Deadzone - 1)
+		{
+			GO_LEFT(ChangedX, ChangedY);
 		}
 	}
 }
