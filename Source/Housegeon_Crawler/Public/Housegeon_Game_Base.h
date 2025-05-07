@@ -74,9 +74,7 @@ private:
 		int EndX, int EndY);
 
 	//Path Pattern Traversal Row First, Travel on the X first and then Y
-	void SpawnedLeft_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY);
-	void SpawnedRight_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY);
-	void SpawnedUp_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY);
+	void SpawnedLeftRight_RowFirst_LineTraversal(bool bStartedFromLeft, int StartX, int StartY, int EndX, int EndY);
 	void SpawnedUpDown_RowFirst_LineTraversal(bool bStartedFromUp, int StartX, int StartY, int EndX, int EndY);
 
 	//Path Pattern Row First: Stair Traversal (Go x amount on each axis before reaching end point)
@@ -84,18 +82,23 @@ private:
 	void SpawnedRight_RowFirst_StairTraversal(int StartX, int StartY, int EndX, int EndY, int X_Increment = 2, int Y_Increment = 2);
 	void SpawnedUpDown_RowFirst_StairTraversal(bool bStartedFromUp, int StartX, int StartY, int EndX, int EndY, int X_Increment = 2, int Y_Increment = 2);
 
+	//The Path Algorithms
+	void DO_RowFirst_LineAlgorithm(int StartX, int StartY, int EndX, int EndY);
 	void DO_RowFirst_StairAlgorithm(int StartX, int StartY, int EndX, int EndY, int X_Increment = 2, int Y_Increment = 2);
+	void DO_ColumnFirst_LineAlgorithm(int StartX, int StartY, int EndX, int EndY);
 
 	//The column first path traversals, travel along the y first and then the x to reach coord
 	void SpawnedLeftRight_ColumnFirst_LineTraversal(bool bStartedFromLeft, int StartX, int StartY, int EndX, int EndY);
+	void SpawnedUpDown_ColumnFirst_LineTraversal(bool bStartedFromUp, int StartX, int StartY, int EndX, int EndY);
 
 	//The helper functions to go around the 3x3 spawns for the traversal algorithms
-	void Go_Around_Spawn(int& ChangedX, int& ChangedY);
+	//Row Based Helper Functions
+	void Go_Around_Spawn_RowBased_LeftRight(int& ChangedX, int& ChangedY, int EndX, int EndY);
 	void Go_Around_Spawn_Vertical_Rated_Version(bool bStartedFromUp, int& ChangedX, int& ChangedY);
 	void Go_Around_Spawn_VerticalStair_Rated_Version(bool bStartedFromUp, int& ChangedX, int& ChangedY);
-
-	//helper functions to go around spawn when doing column based traversal
+	//Column Based Helper functions
 	void Go_Around_Spawn_ColumnBased_LeftRight(bool bStartedFromLeft, int& ChangedX, int& ChangedY);
+	void Go_Around_Spawn_ColumnBased_UpDown(int& ChangedX, int& ChangedY, int EndX, int EndY);
 
 	//Actually Create The Floor Path When Moving From The Path Patterns
 	void GO_LEFT(int &ChangedX, int UnMovedY);

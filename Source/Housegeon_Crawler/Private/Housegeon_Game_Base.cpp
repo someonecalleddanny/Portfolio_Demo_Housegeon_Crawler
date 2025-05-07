@@ -192,8 +192,27 @@ void AHousegeon_Game_Base::Create_Path_From_Start_To_End()
 		Player_Start_Row = Grid_X_Size / 2;
 		Player_Start_Column = Grid_Y_Size / 2;
 
+		//--------------------------------------------------------------------------------------
+		//
+		//The important variables that generate a lot of the stuff below, Put here for ease of debugging
+
+		//Choose the random start from up,down,left,right from the center spawn square
 		int Player_Start_Random = FMath::RandRange(0, 3); //Random start location
-		Player_Start_Random = 1; //Debugging Number Thing
+		
+
+		//Randomly pick if being Row Traversal, set as a variable for help whilst debugging the patterns
+		bool bRowTraversalFirst = FMath::RandBool();
+
+		//Randomly pick if the traversal type will be a line or not
+		bool bLineTraversal = FMath::RandBool();
+
+		//Debugging
+		bRowTraversalFirst = true;
+		bLineTraversal = true;
+		Player_Start_Random = 3;
+
+		//
+		//------------------------------------------------------------------------------------
 
 		//Pick randomly from the playerstart a start location. Goes clockwise starting from up
 		switch (Player_Start_Random)
@@ -235,18 +254,7 @@ void AHousegeon_Game_Base::Create_Path_From_Start_To_End()
 		//Create the first floor to the a to b path algorithm as the function below will build the floor from this
 		DungeonGridInfo[Player_Start_Row][Player_Start_Column] = EDungeonGenerationType::Floor;
 
-		//Step 2: Pick whether the algorithm should go row first or column first and then choose the traversal pattern
-		//...to the end point
-
-		//Randomly pick if being Row Traversal, set as a variable for help whilst debugging the patterns
-		bool bRowTraversalFirst = FMath::RandBool();
-		//Randomly pick if the traversal type will be a line or not
-		bool bLineTraversal = FMath::RandBool();
-		//Debugging
-		bRowTraversalFirst = false;
-		bLineTraversal = true;
-
-		//Step 3: Now, create the paths from a to b with the path algorithms I created
+		//Step 2: Now, create the paths from a to b with the path algorithms I created
 
 		//check if row traversal is picked (going x and then y to desired coord)
 		if (bRowTraversalFirst)
@@ -294,12 +302,28 @@ void AHousegeon_Game_Base::Create_Path_From_Start_To_End()
 
 				//Spawned Up
 			case EPath_Moved::UP:
+				if (bLineTraversal)
+				{
+					SpawnedUpDown_ColumnFirst_LineTraversal(true, Player_Start_Row, Player_Start_Column,
+						MyEndLocations[i].X, MyEndLocations[i].Y);
+				}
+				else 
+				{
 
+				}
 				break;
 
 				//Spawned Down
 			case EPath_Moved::DOWN:
+				if (bLineTraversal)
+				{
+					SpawnedUpDown_ColumnFirst_LineTraversal(false, Player_Start_Row, Player_Start_Column,
+						MyEndLocations[i].X, MyEndLocations[i].Y);
+				}
+				else
+				{
 
+				}
 				break;
 			}
 		}
@@ -323,7 +347,7 @@ void AHousegeon_Game_Base::Pick_Random_Row_Traversal(EPath_Moved PathMoved, bool
 		if (bLineTraversal)
 		{
 			//Line traversal, Go until start x == to end x, then go until start y == end y
-			SpawnedLeft_RowFirst_LineTraversal(Player_Start_Row, Player_Start_Column, EndX, EndY);
+			SpawnedLeftRight_RowFirst_LineTraversal(true, Player_Start_Row, Player_Start_Column, EndX, EndY);
 		}
 		else
 		{
@@ -340,7 +364,7 @@ void AHousegeon_Game_Base::Pick_Random_Row_Traversal(EPath_Moved PathMoved, bool
 		if (bLineTraversal)
 		{
 			//Line traversal, Go until start x == to end x, then go until start y == end y
-			SpawnedRight_RowFirst_LineTraversal(Player_Start_Row, Player_Start_Column, EndX, EndY);
+			SpawnedLeftRight_RowFirst_LineTraversal(false, Player_Start_Row, Player_Start_Column, EndX, EndY);
 		}
 		else
 		{
@@ -387,157 +411,47 @@ void AHousegeon_Game_Base::Pick_Random_Row_Traversal(EPath_Moved PathMoved, bool
 	}
 }
 
-void AHousegeon_Game_Base::SpawnedLeft_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY)
+void AHousegeon_Game_Base::SpawnedLeftRight_RowFirst_LineTraversal(bool bStartedFromLeft, int StartX, int StartY, int EndX, int EndY)
 {
 	// Validate bounds, if not, return which stops all logic from below from happening
 	if (!DungeonGridInfo.IsValidIndex(StartX) || !DungeonGridInfo.IsValidIndex(EndX)) return;
 	if (!DungeonGridInfo[StartX].IsValidIndex(StartY) || !DungeonGridInfo[EndX].IsValidIndex(EndY)) return;
 
-	//if the ax is less than bx, that means that you have to go right
-	if (StartX < EndX)
+	//First check whether the spawn is from left or right because this is important to knowing if the 3x3 spawn is behind
+	//...The path algorithm (I don't want the path algorithm to go through spawn but around it)
+	if (bStartedFromLeft) 
 	{
 		//I go left one more time because if I am going around the spawn, I want a wall's length around the spawn
 		//Whilst, looping around it
 		GO_LEFT(StartX, StartY);
 
-		//This is a bit different to the others, I don't want to go back through spawn
-		//This means that I have to go around the spawn by going up or down first and then doing Row traversal
-		//Choose randomly to go up or down because it does not need to be accurate as creating weird confusing
-		//Paths is the point
-		Go_Around_Spawn(StartX, StartY);
-
-		while (StartX != EndX)
+		//if the ax is less than bx, that means that you have to go right, which is where the 3x3 spawn is, need to go around
+		if (StartX < EndX)
 		{
-			//Keep going right until start x and end x are equal
-			GO_RIGHT(StartX, StartY);
+			//This is a bit different to the others, I don't want to go back through spawn
+			//This means that I have to go around the spawn by going up or down first and then doing Row traversal
+			//Choose randomly to go up or down because it does not need to be accurate as creating weird confusing
+			//Paths is the point
+			Go_Around_Spawn_RowBased_LeftRight(StartX, StartY, EndX, EndY);
 		}
 	}
-	else if (StartX > EndX)//Going left if StartX is bigger than EndX
-	{
-		while (StartX != EndX)
-		{
-			GO_LEFT(StartX, StartY);
-		}
-	}
-
-	if (StartY > EndY) //If Start Y is bigger means that it is below meaning that it has to go up
-	{
-		while (StartY != EndY)
-		{
-			GO_UP(StartX, StartY);
-		}
-	}
-	else if (StartY < EndY) //If the Start Y is less, means that it is on top of End Y and needs to go down
-	{
-		while (StartY != EndY)
-		{
-			GO_DOWN(StartX, StartY);
-		}
-	}
-}
-
-void AHousegeon_Game_Base::SpawnedRight_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY)
-{
-	// Validate bounds, if not, return which stops all logic from below from happening
-	if (!DungeonGridInfo.IsValidIndex(StartX) || !DungeonGridInfo.IsValidIndex(EndX)) return;
-	if (!DungeonGridInfo[StartX].IsValidIndex(StartY) || !DungeonGridInfo[EndX].IsValidIndex(EndY)) return;
-
-	//if the ax is less than bx, that means that you have to go right
-	if (StartX < EndX)
-	{
-		//Since you already spawned from the right, you don't have to go around spawn
-		while (StartX != EndX)
-		{
-			//Keep going right until start x and end x are equal
-			GO_RIGHT(StartX, StartY);
-		}
-	}
-	else if (StartX > EndX)//Going left if StartX is bigger than EndX
+	else //started on the right
 	{
 		//I go right one more time because if I am going around the spawn, I want a wall's length around the spawn
 		//Whilst, looping around it
 		GO_RIGHT(StartX, StartY);
 
-		//This is a bit different to the others, I don't want to go back through spawn
-		//This means that I have to go around the spawn by going up or down first and then doing Row traversal
-		//Choose randomly to go up or down because it does not need to be accurate as creating weird confusing
-		//Paths is the point
-		Go_Around_Spawn(StartX, StartY);
-		while (StartX != EndX)
-		{
-			GO_LEFT(StartX, StartY);
+		//if StartX is bigger means that the endx is to the left, since you spawned to the right that is behind
+		//Therefore, you must go around the 3x3 spawn
+		if (StartX > EndX)
+		{	
+			//Same explanation as above when used the go around spawn
+			Go_Around_Spawn_RowBased_LeftRight(StartX, StartY, EndX, EndY);
 		}
 	}
 
-	if (StartY > EndY) //If Start Y is bigger means that it is below meaning that it has to go up
-	{
-		while (StartY != EndY)
-		{
-			GO_UP(StartX, StartY);
-		}
-	}
-	else if (StartY < EndY) //If the Start Y is less, means that it is on top of End Y and needs to go down
-	{
-		while (StartY != EndY)
-		{
-			GO_DOWN(StartX, StartY);
-		}
-	}
-}
-
-void AHousegeon_Game_Base::SpawnedUp_RowFirst_LineTraversal(int StartX, int StartY, int EndX, int EndY)
-{
-	// Validate bounds, if not, return which stops all logic from below from happening
-	if (!DungeonGridInfo.IsValidIndex(StartX) || !DungeonGridInfo.IsValidIndex(EndX)) return;
-	if (!DungeonGridInfo[StartX].IsValidIndex(StartY) || !DungeonGridInfo[EndX].IsValidIndex(EndY)) return;
-
-	//First off, move one more up, because going horizontal first, meaning I don't want the 3x3 spawn to look ugly
-	//When going left to right
-	GO_UP(StartX, StartY);
-
-	//First check if the end x is within bounds of the row span of the spawn 3x3 and if it is down from the start y
-	//Do this because, you will have to go completely around the 3x3 so that you can not degrade the beauty of
-	//the 3x3 spawn square. Can be dangerous if the grid is not a perfect square, but my whole code assumes it is
-	//If the game changes to have irregular grids, will change
-	if (EndX >= (Grid_X_Size / 2) - 2 && EndX <= (Grid_X_Size / 2) + 2
-		&& EndY > StartY + 1) //Do a plus one because I moved one up already and I know this is on edges of 3x3
-	{
-		//An updated version to go around spawn when you want to to a horizontal first line
-		Go_Around_Spawn_Vertical_Rated_Version(true, StartX, StartY);
-	}
-
-	//if the ax is less than bx, that means that you have to go right
-	if (StartX < EndX)
-	{
-		//Since you already spawned from the right, you don't have to go around spawn
-		while (StartX != EndX)
-		{
-			//Keep going right until start x and end x are equal
-			GO_RIGHT(StartX, StartY);
-		}
-	}
-	else if (StartX > EndX)//Going left if StartX is bigger than EndX
-	{
-		while (StartX != EndX)
-		{
-			GO_LEFT(StartX, StartY);
-		}
-	}
-
-	if (StartY > EndY) //If Start Y is bigger means that it is below meaning that it has to go up
-	{
-		while (StartY != EndY)
-		{
-			GO_UP(StartX, StartY);
-		}
-	}
-	else if (StartY < EndY) //If the Start Y is less, means that it is on top of End Y and needs to go down
-	{
-		while (StartY != EndY)
-		{
-			GO_DOWN(StartX, StartY);
-		}
-	}
+	//Once the check for moving past the 3x3 spawn is over, do the row first line path algorithm
+	DO_RowFirst_LineAlgorithm(StartX, StartY, EndX, EndY);
 }
 
 void AHousegeon_Game_Base::SpawnedUpDown_RowFirst_LineTraversal(bool bStartedFromUp, int StartX, int StartY, int EndX, int EndY)
@@ -550,57 +464,39 @@ void AHousegeon_Game_Base::SpawnedUpDown_RowFirst_LineTraversal(bool bStartedFro
 	if (!DungeonGridInfo[StartX].IsValidIndex(StartY) || !DungeonGridInfo[EndX].IsValidIndex(EndY)) return;
 
 	//Forward declare variables
-	int Y_OffsetCheckerForMoveAroundSpawn;
-	bool bDoGoAround;
+	bool bDoGoAround = false;
 
 	//First off, move one more down or up, because going horizontal first, meaning I don't want the 3x3 spawn to look ugly
 	//When going left to right
 	if (bStartedFromUp) 
 	{
 		GO_UP(StartX, StartY);
-		//Since you just moved up, you need to have an offset to go down by one when checking the move around bounds below
-		Y_OffsetCheckerForMoveAroundSpawn = +1;
 
-		//The bounds logic is used for if below
-		bDoGoAround = (EndX >= (Grid_X_Size / 2) - 2 && EndX <= (Grid_X_Size / 2) + 2
-			&& EndY > StartY + Y_OffsetCheckerForMoveAroundSpawn);
+		//To go around, check if the end x is within the 3x3 row span (+ deadzone to create a gap between path and 3x3 spawn)
+		//Then check if it is behind the path, don't want path going in on itself
+		bDoGoAround = (EndX >= (Grid_X_Size / 2) - Spawn_Deadzone - 1 && EndX <= (Grid_X_Size / 2) + Spawn_Deadzone + 1
+			&& EndY > StartY + 1); //On this line, check if the endy is behind where the path needs to go
 	}
-	else 
+	else //means that you started from the down spawn
 	{
+		//Go down one more time to make a nice gap
 		GO_DOWN(StartX, StartY);
-		//Since you just moved down, you need to have an offset to go up by one when checking the move around bounds below
-		Y_OffsetCheckerForMoveAroundSpawn = -1;
 
-		//The bounds logic is used for if below
-		bDoGoAround = (EndX >= (Grid_X_Size / 2) - 2 && EndX <= (Grid_X_Size / 2) + 2
-			&& EndY < StartY + Y_OffsetCheckerForMoveAroundSpawn);
+		//To go around, check if the end x is within the 3x3 row span (+ deadzone to create a gap between path and 3x3 spawn)
+		//Then check if it is behind the path, don't want path going in on itself
+		bDoGoAround = (EndX >= (Grid_X_Size / 2) - Spawn_Deadzone - 1 && EndX <= (Grid_X_Size / 2) + Spawn_Deadzone + 1
+			&& EndY < StartY - 1); //On this line, check if the endy is behind where the path needs to go
 	}
-	//Explanation for below above ^^^^^^^^ (Moved so this could be used as an up/down function instead of seperately)
-	//First check if the end x is within bounds of the row span of the spawn 3x3 and if it is up one from the start y
-	//Do this because, you will have to go completely around the 3x3 so that you can not degrade the beauty of
-	//the 3x3 spawn square. Can be dangerous if the grid is not a perfect square, but my whole code assumes it is
-	//If the game changes to have irregular grids, will change
-	if (bDoGoAround) //Do a -/+ one because I moved one down/up already and I know this is on edges of 3x3
+
+	//If the checks above find that the path needs to go around the 3x3 spawn then do the helper function below
+	if (bDoGoAround)
 	{
 		//An updated version to go around spawn when you want to to a horizontal first line
 		Go_Around_Spawn_Vertical_Rated_Version(bStartedFromUp, StartX, StartY);
 	}
 
-	while (StartX != EndX) //Move horizontally first
-	{
-		//if the start x is less than end x, means that it is below and needs to be moved right
-		//the else is the inverse
-		//Once it is equal, meaning, you reached the coord, the while loop breaks because it reached the condition
-		(StartX < EndX) ? GO_RIGHT(StartX, StartY) : GO_LEFT(StartX, StartY);
-	}
-
-	while (StartY != EndY) //Move vertically next
-	{
-		//if the start y is bigger than end y, means that it is below and needs to be moved up
-		//the else is the inverse
-		//Once it is equal, meaning, you reached the coord, the while loop breaks because it reached the condition
-		(StartY > EndY)? GO_UP(StartX, StartY) : GO_DOWN(StartX, StartY);
-	}
+	//Once the check for moving past the 3x3 spawn is over, do the row first line path algorithm
+	DO_RowFirst_LineAlgorithm(StartX, StartY, EndX, EndY);
 }
 
 void AHousegeon_Game_Base::SpawnedLeft_RowFirst_StairTraversal(int StartX, int StartY, int EndX, int EndY, int X_Increment, int Y_Increment)
@@ -824,6 +720,21 @@ void AHousegeon_Game_Base::SpawnedUpDown_RowFirst_StairTraversal(bool bStartedFr
 }
 
 
+void AHousegeon_Game_Base::DO_RowFirst_LineAlgorithm(int StartX, int StartY, int EndX, int EndY)
+{
+	while (StartX != EndX) 
+	{
+		//if the start x is bigger than the end x, means that you have to go left, inverse when startx is less
+		(StartX > EndX) ? GO_LEFT(StartX, StartY) : GO_RIGHT(StartX, StartY);
+	}
+
+	while (StartY != EndY) 
+	{
+		//if start y is bigger, means it is below the end y and must go up, inverse for when start x is more
+		(StartY > EndY) ? GO_UP(StartX, StartY) : GO_DOWN(StartX, StartY);
+	}
+}
+
 void AHousegeon_Game_Base::DO_RowFirst_StairAlgorithm(int StartX, int StartY, int EndX, int EndY, int X_Increment, int Y_Increment)
 {
 	//So, While the start coords are not equal keep doing the stair loops until reaching destination
@@ -841,6 +752,22 @@ void AHousegeon_Game_Base::DO_RowFirst_StairAlgorithm(int StartX, int StartY, in
 			//if end y lower, means that you have to go lower y index, going up, inverse for going down
 			(EndY < StartY) ? GO_UP(StartX, StartY) : GO_DOWN(StartX, StartY);
 		}
+	}
+}
+
+void AHousegeon_Game_Base::DO_ColumnFirst_LineAlgorithm(int StartX, int StartY, int EndX, int EndY)
+{
+	//now just do the algorithm to move column and then row
+	while (StartY != EndY)
+	{
+		//if start y is less that means it is above it and must go down, else, must go up
+		(StartY < EndY) ? GO_DOWN(StartX, StartY) : GO_UP(StartX, StartY);
+	}
+	//Now do Row traversal
+	while (StartX != EndX)
+	{
+		//if start x is less that means it is to the left of end x and must go right, else, must go left
+		(StartX < EndX) ? GO_RIGHT(StartX, StartY) : GO_LEFT(StartX, StartY);
 	}
 }
 
@@ -882,55 +809,105 @@ void AHousegeon_Game_Base::SpawnedLeftRight_ColumnFirst_LineTraversal(bool bStar
 		}
 	}
 
-	//now just do the algorithm to move column and then row
-	while (StartY != EndY) 
-	{
-		//if start y is less that means it is above it and must go down
-		if (StartY < EndY) 
-		{
-			GO_DOWN(StartX, StartY);
-		}
-		else //do inverse by going up, if starty and endy become equal, while loop breaks
-		{
-			GO_UP(StartX, StartY);
-		}
-	}
-	//Now do Row traversal
-	while (StartX != EndX)
-	{
-		//if start x is less that means it is to the left and must go right
-		if (StartX < EndX)
-		{
-			GO_RIGHT(StartX, StartY);
-		}
-		else //do inverse by going left, if starty and endy become equal, while loop breaks
-		{
-			GO_LEFT(StartX, StartY);
-		}
-	}
+	//Now do the column first algorithm with the 3x3 spawn out of the way
+	DO_ColumnFirst_LineAlgorithm(StartX, StartY, EndX, EndY);
 }
 
-void AHousegeon_Game_Base::Go_Around_Spawn(int& ChangedX, int& ChangedY)
+void AHousegeon_Game_Base::SpawnedUpDown_ColumnFirst_LineTraversal(bool bStartedFromUp, int StartX, int StartY, int EndX, int EndY)
+{
+	// Validate bounds, if not, return which stops all logic from below from happening
+	if (!DungeonGridInfo.IsValidIndex(StartX) || !DungeonGridInfo.IsValidIndex(EndX)) return;
+	if (!DungeonGridInfo[StartX].IsValidIndex(StartY) || !DungeonGridInfo[EndX].IsValidIndex(EndY)) return;
+
+	if (bStartedFromUp) //Started from up
+	{
+		//Go up one more time to avoid overlapping with spawn
+		GO_UP(StartX, StartY);
+
+		//if the endy is more than the start y, that means it is behind, the 3x3 spawn is also behind, so have to go around
+		if (EndY > StartY) 
+		{
+			Go_Around_Spawn_ColumnBased_UpDown(StartX, StartY, EndX, EndY);
+		}
+	}
+	else //Started from down
+	{
+		//Go down one more to give a nice gap
+		GO_DOWN(StartX, StartY);
+
+		//if the endy is less than the start y, that means it is behind (Since end y is above by being less than start y)
+		// the 3x3 spawn is also behind, so have to go around
+		if (EndY < StartY)
+		{
+			Go_Around_Spawn_ColumnBased_UpDown(StartX, StartY, EndX, EndY);
+		}
+	}
+
+	//Now do the column first algorithm with the 3x3 spawn out of the way
+	DO_ColumnFirst_LineAlgorithm(StartX, StartY, EndX, EndY);
+}
+
+void AHousegeon_Game_Base::Go_Around_Spawn_RowBased_LeftRight(int& ChangedX, int& ChangedY, int EndX, int EndY)
 {
 	//Helper function to go around the 3x3 spawn to make the paths look better
+	//Ironically this helper function is similar to "Go_Around_Spawn_ColumnBased_UpDown" (copy/pasted and changed)
+	//Just think of rotating the whole grid and suddenly row first traversal looks like column based traversal
+	//With that thought in mind, the copy/pasted logic is mirrored
+
+	bool bEndpointInSpawnShadow = false;
+
+	//Do a neat check if the end x is exactly equal to the spawn x, do this because the path can loop through the spawn
+	//but it looks like it's coming from the up/down spawn making a cool loop pattern
+	if (!(EndX == (Grid_X_Size / 2))) 
+	{
+		// First check if the end point is within the shadow of the entire 3x3 spawn
+		//Do this because, do not want the column based traversel to go through the spawn if the endpoint is relatively in
+		//the center (Creates an irregular spawn)
+		if (EndX > (Grid_X_Size / 2) - Spawn_Deadzone - 1 && EndX < (Grid_X_Size / 2) + Spawn_Deadzone + 1)
+		{
+			bEndpointInSpawnShadow = true;
+		}
+	}
+
+	if (bEndpointInSpawnShadow)
+	{
+		//Make a bool to easily visualise if I have to go up or not
+		bool bGoUp = (ChangedY > EndY);
+
+		//Looks confusing but I do it like this because I don't want 3 indents of if/elses + while loops
+		//Basically, I create the edge y by checking which way I am going (Up/Down) if right, set edge y location
+		//to the top edge of 3x3 spawn, else = the down edge of 3x3 spawn
+		int EdgeY = (bGoUp)
+			? (Grid_Y_Size / 2) - Spawn_Deadzone - 1
+			: (Grid_Y_Size / 2) + Spawn_Deadzone + 1;
+
+		//While you haven't gone to the 3x3 spawn edge keeping going up/down
+		while (ChangedY != EdgeY)
+		{
+			//I do the ? below because I don't want to have 3 indents of ifs and whiles (IMO better readability)
+			//This is as simple as an if else can get: if up? go up, else? go down
+			(bGoUp) ? GO_UP(ChangedX, ChangedY) : GO_DOWN(ChangedX, ChangedY);
+		}
+
+		//Once the edge is reached I want to return because the below code assumes that the endpoint is not within the
+		//3x3 spawn shadow area
+		return;
+	}
+
+	//Choose randomly to either go to the upmost or downmost edge to bypass the 3x3 spawn area before doing row traversal
 	if (FMath::RandBool())
 	{
-		//if the end x,y is kinda in the center of the grid, the path will go up and then right
-		//Then go through the spawn, image inside my head makes it look cool
+		// if the end x,y is kinda in the center of the grid, the path will go up or down to avoid the spawn area
+		// and then continue the traversal in the row-based pattern
 
-		for (int i = 0; i < 3; i++)
+		while (ChangedY != (Grid_Y_Size / 2) - Spawn_Deadzone - 1) 
 		{
 			GO_UP(ChangedX, ChangedY);
 		}
-
-		//I choose 3 ups and downs because the spawn area is 3x3 and always will be (if needs to change, I'll make
-		//Variable)
 	}
 	else
 	{
-		//if the end x,y is kinda in the center of the grid, the path will go down and then right
-		//Then go through the spawn, image inside my head makes it look cool
-		for (int i = 0; i < 3; i++)
+		while (ChangedY != (Grid_Y_Size / 2) + Spawn_Deadzone + 1)
 		{
 			GO_DOWN(ChangedX, ChangedY);
 		}
@@ -940,6 +917,8 @@ void AHousegeon_Game_Base::Go_Around_Spawn(int& ChangedX, int& ChangedY)
 void AHousegeon_Game_Base::Go_Around_Spawn_Vertical_Rated_Version(bool bStartedFromUp, int& ChangedX, int& ChangedY)
 {
 	//Randomly choose between going horizontlly right 3 times or left before going down
+	//I started doing 1/4 and 3/4 x locations in other functions but I kinda want to keep this here as it eliminates
+	//Repetition on bigger grids if there are different x move arounds going on
 	if (FMath::RandBool())
 	{
 		for (int i = 0; i < 3; i++)
@@ -959,8 +938,17 @@ void AHousegeon_Game_Base::Go_Around_Spawn_Vertical_Rated_Version(bool bStartedF
 	//behind the 3x3 spawn sqaure
 	if (bStartedFromUp) 
 	{
-		//Then you have to go 7 down on y because: 3 = spawn, 2 = moving up, 2 = the gap to make beauty spawn
-		for (int i = 0; i < 7; i++) 
+		/*
+			//old debug code
+			//Then you have to go 7 down on y because: 3 = spawn, 2 = moving up, 2 = the gap to make beauty spawn
+		for (int i = 0; i < 7; i++)
+		{
+			GO_DOWN(ChangedX, ChangedY);
+		}
+		*/
+
+		//The y path has to go to the bottom edge of the 3x3 spawn + a big enough gap so the the path does not overlap
+		while (ChangedY != (Grid_Y_Size / 2) + Spawn_Deadzone + 1)
 		{
 			GO_DOWN(ChangedX, ChangedY);
 		}
@@ -968,8 +956,15 @@ void AHousegeon_Game_Base::Go_Around_Spawn_Vertical_Rated_Version(bool bStartedF
 	}
 	else //So you started from down, do the inverse of above
 	{
-		//Then you have to go 7 UP on y because: 3 = spawn, 2 = moving down, 2 = the gap to make beauty spawn
+		/*
+			//Old debug code
+					//Then you have to go 7 UP on y because: 3 = spawn, 2 = moving down, 2 = the gap to make beauty spawn
 		for (int i = 0; i < 7; i++)
+		{
+			GO_UP(ChangedX, ChangedY);
+		}
+		*/
+		while (ChangedY != (Grid_Y_Size / 2) - Spawn_Deadzone - 1)
 		{
 			GO_UP(ChangedX, ChangedY);
 		}
@@ -1083,21 +1078,84 @@ void AHousegeon_Game_Base::Go_Around_Spawn_ColumnBased_LeftRight(bool bStartedFr
 	}
 }
 
+void AHousegeon_Game_Base::Go_Around_Spawn_ColumnBased_UpDown(int& ChangedX, int& ChangedY, int EndX, int EndY)
+{
+	bool bEndpointInSpawnShadow = false;
+	//Do a neat check if the end y is exactly equal to the spawn, do this because the path can loop through the spawn
+	//but it looks like it's coming from the left/right spawn making a cool loop pattern
+	if (!(EndY == (Grid_Y_Size / 2))) 
+	{
+		//First check if the end point is within the shadow of the entire 3x3 spawn
+		//Do this because, do not want the column based traversel to go through the spawn if the endpoint is relatively in
+		//the center (Creates an irregular spawn)
+		if (EndY > (Grid_Y_Size / 2) - Spawn_Deadzone - 1 && EndY < (Grid_Y_Size / 2) + Spawn_Deadzone + 1)
+		{
+			bEndpointInSpawnShadow = true;
+		}
+	}
+
+	if (bEndpointInSpawnShadow) 
+	{
+		//Make a bool to easily visualise if I have to go right or not
+		bool bGoRight = (ChangedX < EndX);
+
+		//Looks confusing but I do it like this because I don't want 3 indents of if/elses + while loops
+		//Basically, I create the edge x by checking which way I am going (Left/Right) if right, set edge x location
+		//to the right edge of 3x3 spawn, else = the leftmost edge of 3x3 spawn
+		int EdgeX = (bGoRight)
+			? (Grid_X_Size / 2) + Spawn_Deadzone + 1
+			: (Grid_X_Size / 2) - Spawn_Deadzone - 1;
+
+		//While you haven't gone to the 3x3 spawn edge keeping going left or right
+		while (ChangedX != EdgeX) 
+		{
+			//I do the ? below because I don't want to have 3 indents of ifs and whiles (IMO better readability)
+			//This is as simple as an if else can get: if right? go right, else? go left
+			(bGoRight) ? GO_RIGHT(ChangedX, ChangedY) : GO_LEFT(ChangedX, ChangedY);
+		}
+
+		//Once the edge is reached I want to return because the below code assumes that the endpoint is not within the
+		//3x3 spawn shadow area
+		return;
+	}
+	//Choose randomly between going left or right
+	if (FMath::RandBool()) 
+	{
+		//This is a while loop to go to the left most edge of the 3x3 spawn + gap for beauty
+		while (ChangedX != (Grid_X_Size / 2) - Spawn_Deadzone - 1)
+		{
+			GO_LEFT(ChangedX, ChangedY);
+		}
+	}
+	else 
+	{
+		//This is a while loop to go to the right most edge of the 3x3 spawn + gap for beauty
+		while (ChangedX != (Grid_X_Size / 2) + Spawn_Deadzone + 1)
+		{
+			GO_RIGHT(ChangedX, ChangedY);
+		}
+	}
+}
+
 
 
 
 void AHousegeon_Game_Base::GO_LEFT(int& ChangedX, int UnMovedY)
 {
 	UE_LOG(LogTemp, Display, TEXT("Going left"));
-	//Move the X by one to the left
-	ChangedX -= 1;
+	//Move the X by one to the left First check if the new x is valid within the array, particularly when 0
+	//Don't want to change to -1 if the valid bounds check fails in code below
+	int NewX = ChangedX - 1;
 
 	//First check if the place you will be moving to is within bounds of the grid array
-	if (DungeonGridInfo.IsValidIndex(ChangedX)) 
+	if (DungeonGridInfo.IsValidIndex(NewX))
 	{
 		//Double check that the column inputted is valid
-		if (DungeonGridInfo[ChangedX].IsValidIndex(UnMovedY)) 
+		if (DungeonGridInfo[NewX].IsValidIndex(UnMovedY))
 		{
+			//Now that I am comfortable every bound is checked, I can now set the inputted x to the new x
+			ChangedX = NewX;
+
 			//Then check if the place moving to is a wall, do this because POIs are assumed to have a 1x1 perimeter,
 			//Meaning that the player can still walk through it (I don't want to change a POI to a floor)
 			if (DungeonGridInfo[ChangedX][UnMovedY] == EDungeonGenerationType::Wall) 
@@ -1112,15 +1170,19 @@ void AHousegeon_Game_Base::GO_LEFT(int& ChangedX, int UnMovedY)
 void AHousegeon_Game_Base::GO_RIGHT(int& ChangedX, int UnMovedY)
 {
 	UE_LOG(LogTemp, Display, TEXT("Going Right"));
-	//Move the X by one to the Right
-	ChangedX += 1;
+	//Move the X by one to the Right. First check if the new x is valid within the array, particularly when too big a num
+	//Don't want to change to array max if the valid bounds check fails in code below
+	int NewX = ChangedX + 1;
 
 	//First check if the place you will be moving to is within bounds of the grid array
-	if (DungeonGridInfo.IsValidIndex(ChangedX))
+	if (DungeonGridInfo.IsValidIndex(NewX))
 	{
 		//Double check that the column inputted is valid
-		if (DungeonGridInfo[ChangedX].IsValidIndex(UnMovedY))
+		if (DungeonGridInfo[NewX].IsValidIndex(UnMovedY))
 		{
+			//Now that I am comfortable every bound is checked, I can now set the inputted x to the new x
+			ChangedX = NewX;
+
 			//Then check if the place moving to is a wall, do this because POIs are assumed to have a 1x1 perimeter,
 			//Meaning that the player can still walk through it (I don't want to change a POI to a floor)
 			if (DungeonGridInfo[ChangedX][UnMovedY] == EDungeonGenerationType::Wall)
@@ -1135,15 +1197,18 @@ void AHousegeon_Game_Base::GO_RIGHT(int& ChangedX, int UnMovedY)
 void AHousegeon_Game_Base::GO_UP(int UnMovedX, int& ChangedY)
 {
 	UE_LOG(LogTemp, Display, TEXT("Going Up"));
-	//Move the Y by one to the UP
-	ChangedY -= 1;
+	//Move the Y by one to the UP. Don't set ChangedY yet because need to check if is in bounds
+	int NewY = ChangedY - 1;
 
 	//First check if the inputted row is actually valid
 	if (DungeonGridInfo.IsValidIndex(UnMovedX))
 	{
 		//Check that the new column moved to is within bounds of the grid array (Column is the Y being traversed)
-		if (DungeonGridInfo[UnMovedX].IsValidIndex(ChangedY))
+		if (DungeonGridInfo[UnMovedX].IsValidIndex(NewY))
 		{
+			//Now that I am comfortable every bound is checked, I can now set the inputted y to the new y
+			ChangedY = NewY;
+
 			//Then check if the place moving to is a wall, do this because POIs are assumed to have a 1x1 perimeter,
 			//Meaning that the player can still walk through it (I don't want to change a POI to a floor)
 			if (DungeonGridInfo[UnMovedX][ChangedY] == EDungeonGenerationType::Wall)
@@ -1158,15 +1223,18 @@ void AHousegeon_Game_Base::GO_UP(int UnMovedX, int& ChangedY)
 void AHousegeon_Game_Base::GO_DOWN(int UnMovedX, int& ChangedY)
 {
 	UE_LOG(LogTemp, Display, TEXT("Going Down"));
-	//Move the Y by one to the UP
-	ChangedY += 1;
+	//Move the Y by one Down. Don't set ChangedY yet because need to check if is in bounds
+	int NewY = ChangedY + 1;
 
 	//First check if the inputted row is actually valid
 	if (DungeonGridInfo.IsValidIndex(UnMovedX))
 	{
 		//Check that the new column moved to is within bounds of the grid array (Column is the Y being traversed)
-		if (DungeonGridInfo[UnMovedX].IsValidIndex(ChangedY))
+		if (DungeonGridInfo[UnMovedX].IsValidIndex(NewY))
 		{
+			//Now that I am comfortable every bound is checked, I can now set the inputted y to the new y
+			ChangedY = NewY;
+
 			//Then check if the place moving to is a wall, do this because POIs are assumed to have a 1x1 perimeter,
 			//Meaning that the player can still walk through it (I don't want to change a POI to a floor)
 			if (DungeonGridInfo[UnMovedX][ChangedY] == EDungeonGenerationType::Wall)
