@@ -71,6 +71,9 @@ void AMC::Spawn_At_Center_Grid()
 
 			//Unreal's rotation system is crap so I am brute forcing my normalised rotation for every actor spawned to face
 			//0,0 of the grid which is the top left, testing I found yaw -90 faces that with my player so set it to this
+			//Once I am comfortable with the navigation working, I will come back to this when I figure out how to 
+			//translate relative rotations with 0 being forward on the navigation grid (This will be priority when coding
+			//AI)
 			FRotator CustomRotationSpawn;
 			CustomRotationSpawn.Yaw = -90;
 
@@ -93,22 +96,11 @@ void AMC::Spawn_At_Center_Grid()
 	}
 }
 
-void AMC::MoveForward(const FInputActionValue& Value)
+void AMC::Manual_MoveForward()
 {
-	//the whole movement logic relies on the game state, so instantly shoot red flags if not valid
-	if (!myDungeonState) 
-	{
-		UE_LOG(LogTemp, Error, TEXT("Dungeon Game State not found!!!"));
-		return;
-	} 
-
-	//Will use later to keep walking whilst walking is held down
-	bKeepWalkingForward = Value.Get<bool>();
-
-
-	//Since timelines create a delay in movement to the next cell check if the player tries to move again during that
-	//animation, also check if the next cell to move forward is actually a movable place
-	if (bAbleToMove && myDungeonState->Can_Move_Forward(myGridTransform.X, myGridTransform.Y, myGridTransform.NormalizedYaw))
+	//Check if the forward cell (check rotation from normalised yaw, set when calling rotation functions),
+	//is movable
+	if (myDungeonState->Can_Move_Forward(myGridTransform.X, myGridTransform.Y, myGridTransform.NormalizedYaw))
 	{
 		UE_LOG(LogTemp, Display, TEXT("MOVING FORWARD!!!"));
 
@@ -126,77 +118,132 @@ void AMC::MoveForward(const FInputActionValue& Value)
 
 		Call_Move_Forward(StartLocation, EndLocation);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Forward path blocked, can't move forward"))
+	}
+}
+
+void AMC::MoveForward(const FInputActionValue& Value)
+{
+	//Used for BP timelines, once forward lerp is finished, if the move forward key is still pressed, it will call movement
+	//again, This does assume that the IA class has the OnPressed + OnReleased trigger
+	bKeepWalkingForward = Value.Get<bool>();
+
+	//the whole movement logic relies on the game state, so instantly shoot red flags if not valid
+	if (!myDungeonState) 
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dungeon Game State not found!!!"));
+		return;
+	} 
+
+	//if already moving from another function or this, instantly return and don't do logic below
+	if (!bAbleToMove)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING OR FIGHTING"));
+		return;
+	}
+
+	//Call the C++ logic to move forward
+	Manual_MoveForward();
 }
 
 void AMC::RotateLeftRight(const FInputActionValue& Value)
 {
+
+	//if already moving from another function or this, instantly return and don't do logic below
+	if (!bAbleToMove)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING OR FIGHTING"));
+		return;
+	}
+
 	UE_LOG(LogTemp, Display, TEXT("Movement Left Right"));
 	float LeftRightChecker = Value.Get<float>();
 	FRotator Desired_Rotation = GetActorRotation();
 
-
+	//Rotate -90 (left)
 	if (LeftRightChecker < 0.f)
 	{
 		UE_LOG(LogTemp, Display, TEXT("LEFT ROTATING, current rotation = %f"), GetActorRotation().Yaw);
 
-		Desired_Rotation.Yaw -= 90.f;
-		//SetActorRotation(Current_Rotation);
+		//The temp normalised yaw system to make sure that the grid navigation is working (will fix on later stage of
+		//development, AI system)
+		myGridTransform.NormalizedYaw -= 90.f;
 
-		if (bAbleToMove)
+		//if started on the forward rotation but moved left, go to WEST which is 270.f,
+		// do this to force 4 yaw values 0, 90 , 180, 270
+		if (myGridTransform.NormalizedYaw < 0) 
 		{
-			/*
-			I tried to make a timeline in CPP but it's just way tooooo much work when I just can make it in BP
-			*/
-			Call_Rotate_90(GetActorRotation(), Desired_Rotation);
-			bAbleToMove = false;
+			myGridTransform.NormalizedYaw = 270.f;
 		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING OR FIGHTING"));
-		}
+
+		//Rotate along the yaw to the left
+		Desired_Rotation.Yaw -= 90.f;
+		/*
+		I tried to make a timeline in CPP but it's just way tooooo much work when I just can make it in BP
+		*/
+		Call_Rotate_90(GetActorRotation(), Desired_Rotation);
+		bAbleToMove = false;
+
+		//Rotate the normalised yaw left for the grid naviation system (Currently a temp solution will come back later)
+
 
 	}
-	else
+	else//Rotating 90 degrees right
 	{
+		//The temp normalised yaw system to make sure that the grid navigation is working (will fix on later stage of
+		//development, AI system)
+		myGridTransform.NormalizedYaw += 90.f;
+		
+		//if on WEST (270.f) degrees on yaw, Set it to NORTH which is 0.f, do this to force 4 yaw values 0, 90 , 180, 270
+		if (myGridTransform.NormalizedYaw > 270.f)
+		{
+			myGridTransform.NormalizedYaw = 0.f;
+		}
+
+		//Rotate along the yaw to rotate right
 		Desired_Rotation.Yaw += 90.f;
-		//SetActorRotation(Desired_Rotation);
-		if (bAbleToMove)
-		{
-			UE_LOG(LogTemp, Display, TEXT("Right ROTATING, current rotation = %f"), GetActorRotation().Yaw);
-			/*
-			I tried to make a timeline in CPP but it's just way tooooo much work when I just can make it in BP
+
+		UE_LOG(LogTemp, Display, TEXT("Right ROTATING, current rotation = %f"), GetActorRotation().Yaw);
+		/*
+		I tried to make a timeline in CPP but it's just way tooooo much work when I just can make it in BP
 		*/
-			Call_Rotate_90(GetActorRotation(), Desired_Rotation);
-			bAbleToMove = false;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING OR FIGHTING"));
-		}
+		Call_Rotate_90(GetActorRotation(), Desired_Rotation);
+		bAbleToMove = false;
 	}
 }
 
 void AMC::Rotate180(const FInputActionValue& Value)
 {
+	//if already moving from another function or this, instantly return and don't do logic below
+	if (!bAbleToMove)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING OR FIGHTING"));
+		return;
+	}
+
 	UE_LOG(LogTemp, Display, TEXT("Movement Back"));
 	FRotator Desired_Rotation = GetActorRotation();
 
+	UE_LOG(LogTemp, Display, TEXT("Right ROTATING"));
+	//Rotate along the Yaw to rotate the player behind
 	Desired_Rotation.Yaw += 180.f;
 
-	if (bAbleToMove)
-	{
-		UE_LOG(LogTemp, Display, TEXT("Right ROTATING"));
+	//Do the Navigation grid transform
+	myGridTransform.NormalizedYaw += 180.f;
 
-		/*
-			I tried to make a timeline in CPP but it's just way tooooo much work when I just can make it in BP
-		*/
-		Call_Rotate_180(GetActorRotation(), Desired_Rotation);
-		bAbleToMove = false;
-	}
-	else
+	//If goes over 270, normalise by subtrating by 360
+	if (myGridTransform.NormalizedYaw > 270.f)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING"));
+		myGridTransform.NormalizedYaw -= 360.f;
 	}
+
+	/*
+		I tried to make a timeline in CPP but it's just way tooooo much work when I just can make it in BP
+	*/
+	Call_Rotate_180(GetActorRotation(), Desired_Rotation);
+	bAbleToMove = false;
 }
 
 // Called every frame

@@ -56,6 +56,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "C++ Grid Movement Logic")
 	bool bAbleToMove = true;
 
+	/*
+		Might be confusing why there are 3 different move forwards, but this is the one that actually moves forward.
+		Have this confusion because I want the player to keep moving when move forward key is pressed which means I need
+		a function that can be used within C++ and BP for timeline lerp logic
+	*/
+	UFUNCTION(BlueprintCallable, Category = "C++ Functions")
+	void Manual_MoveForward();
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "C++ Events")
 	void Call_Move_Forward(FVector BeforeLocation, FVector DesiredLocation);
 
