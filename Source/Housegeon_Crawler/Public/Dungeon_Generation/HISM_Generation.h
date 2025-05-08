@@ -46,6 +46,7 @@ private:
 	UHierarchicalInstancedStaticMeshComponent* HISM_Floors;
 
 	void Display_Everything_From_Dungeon_Grid(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_PARAM);
+	void Create_Dungeon_Perimeter(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_PARAM);
 
 	FRotator Get_Random_Generation_Rotation();
 };

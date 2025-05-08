@@ -66,6 +66,10 @@ void AHISM_Generation::Tick(float DeltaTime)
 
 void AHISM_Generation::Display_Everything_From_Dungeon_Grid(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_PARAM)
 {
+	// If the dungeon grid array is flat out not created then return
+	if (!DungeonGridInfo_PARAM.IsValidIndex(0)) return;
+	if (!DungeonGridInfo_PARAM[0].IsValidIndex(0)) return;
+
 	UE_LOG(LogTemp, Warning, TEXT("Wall Generation Started!"));
 
 	//Create the transform that will be inputted when I add an instance to my HISM Wall
@@ -77,60 +81,107 @@ void AHISM_Generation::Display_Everything_From_Dungeon_Grid(TArray<TArray<EDunge
 	//Forward declare rotation
 	FRotator Rotation;
 
-	if (DungeonGridInfo_PARAM.IsValidIndex(0)) 
+	//Go through each of the grid info and find which ones have the wall enum and then add instance
+	for (int x = 0; x < DungeonGridInfo_PARAM.Num(); x++)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("WALL X VALID"));
-		if (DungeonGridInfo_PARAM[0].IsValidIndex(0)) 
+		for (int y = 0; y < DungeonGridInfo_PARAM[0].Num(); y++)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("WALL Y VALID"));
-			//Go through each of the grid info and find which ones have the wall enum and then add instance
-			for (int x = 0; x < DungeonGridInfo_PARAM.Num(); x++)
+			//Check if the dungeon grid returns a wall enum type to generate a wall
+			if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Wall)
 			{
-				for (int y = 0; y < DungeonGridInfo_PARAM[0].Num(); y++)
-				{
-					//Check if the dungeon grid returns a wall enum type to generate a wall
-					if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Wall)
-					{
-						//UE_LOG(LogTemp, Warning, TEXT("WALL FOUND TO Generate!"));
-						WallTransform.SetLocation(Location);
+				//UE_LOG(LogTemp, Warning, TEXT("WALL FOUND TO Generate!"));
+				WallTransform.SetLocation(Location);
 
-						//Get a random rotation on the z from 90 degree intervals on the Yaw
-						WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
+				//Get a random rotation on the z from 90 degree intervals on the Yaw
+				WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
 
-						HISM_Walls->AddInstance(WallTransform, true);
-					}
-					else if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Floor ||
-						DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Spawn ||
-						DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::EndPoint)
-					{
-						//UE_LOG(LogTemp, Warning, TEXT("Floor FOUND TO Generate!"));
-						WallTransform.SetLocation(Location);
-
-						//Get a random rotation on the z from 90 degree intervals on the Yaw
-						WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
-
-						HISM_Floors->AddInstance(WallTransform, true);
-					}
-					{
-						//UE_LOG(LogTemp, Error, TEXT("NO WALL FOUND TO Generate!"));
-					}
-					//Once finished with column, got to the next one
-					Location.Y += 400.f;
-				}
-				Location.Y = 0.f;
-
-				//Once finished with the row, go to the next one
-				Location.X += 400.f;
+				HISM_Walls->AddInstance(WallTransform, true);
 			}
+			else if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Floor ||
+				DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Spawn ||
+				DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::EndPoint)
+			{
+				//UE_LOG(LogTemp, Warning, TEXT("Floor FOUND TO Generate!"));
+				WallTransform.SetLocation(Location);
+
+				//Get a random rotation on the z from 90 degree intervals on the Yaw
+				WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
+
+				HISM_Floors->AddInstance(WallTransform, true);
+			}
+			{
+				//UE_LOG(LogTemp, Error, TEXT("NO WALL FOUND TO Generate!"));
+			}
+			//Once finished with column, got to the next one
+			Location.Y += 400.f;
 		}
-		else 
-		{
-			UE_LOG(LogTemp, Error, TEXT("WALL Y NOT VALID"));
-		}
+		Location.Y = 0.f;
+
+		//Once finished with the row, go to the next one
+		Location.X += 400.f;
 	}
-	else 
+
+	//Once finished with the generation of the dungeon, now create a perimeter
+	Create_Dungeon_Perimeter(DungeonGridInfo_PARAM);
+}
+
+void AHISM_Generation::Create_Dungeon_Perimeter(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_PARAM)
+{
+	// If the dungeon grid array is flat out not created then return
+	if (!DungeonGridInfo_PARAM.IsValidIndex(0)) return;
+	if (!DungeonGridInfo_PARAM[0].IsValidIndex(0)) return;
+
+	//Create the transform that will be inputted when I add an instance to my HISM Wall
+	FTransform WallTransform;
+
+	//Forward declare location to be diagonally up and left to start encasing the dungeon in a perimeter wall
+	FVector Location(-400.0f, -400.0f, 0.0f);
+
+	//Forward declare rotation
+	FRotator Rotation;
+
+	for (int i = 0; i < 2; i++) 
 	{
-		UE_LOG(LogTemp, Error, TEXT("WALL X NOT VALID"));
+		//Start a diagonal left from the start cell, do twice because I want to make perimeter on opposite side
+		Location.X = -400.f;
+		
+		//Keep making walls until you reach the max size of the grid + 1
+		for (int x = -1; x < DungeonGridInfo_PARAM.Num() + 1; x++) 
+		{
+			WallTransform.SetLocation(Location);
+
+			//Get a random rotation on the z from 90 degree intervals on the Yaw
+			WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
+
+			HISM_Walls->AddInstance(WallTransform, true);
+
+			Location.X += 400.f;
+		}
+		//Go to the bottom half of the dungeon perimeter
+		Location.Y = 400.f * DungeonGridInfo_PARAM[0].Num() + 1;
+	}
+
+	//Go Back to the leftmost perimeter side
+	Location.X = -400.f;
+	//Now I need to make the side perimeters
+	for (int i = 0; i < 2; i++) 
+	{
+		//Start from 0 because there is a perimeter already above
+		Location.Y = 0.f;
+
+		for (int y = 0; y < DungeonGridInfo_PARAM[0].Num(); y++) 
+		{
+			WallTransform.SetLocation(Location);
+
+			//Get a random rotation on the z from 90 degree intervals on the Yaw
+			WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
+
+			HISM_Walls->AddInstance(WallTransform, true);
+
+			Location.Y += 400.f;
+		}
+
+		Location.X = 400.f * DungeonGridInfo_PARAM.Num() + 1;
 	}
 }
 

@@ -17,6 +17,14 @@
 
 #include "MC.generated.h"
 
+
+struct NormalizedGridTransform 
+{
+	int X = 0;
+	int Y = 0;
+	float NormalizedYaw = 0;
+};
+
 UCLASS()
 class HOUSEGEON_CRAWLER_API AMC : public APawn
 {
@@ -39,8 +47,44 @@ protected:
 	UFUNCTION()
 	void Spawn_At_Center_Grid();
 
+	//Grid Based Movement Based Logic
+	NormalizedGridTransform myGridTransform;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "C++ Grid Movement Logic")
+	bool bKeepWalkingForward = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "C++ Grid Movement Logic")
+	bool bAbleToMove = true;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "C++ Events")
+	void Call_Move_Forward(FVector BeforeLocation, FVector DesiredLocation);
+
+	//Blueprint Called Events
+	UFUNCTION(BlueprintImplementableEvent, Category = "C++ Events")
+	void Call_Rotate_90(FRotator BeforeRotation, FRotator DesiredRotation);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "C++ Events")
+	void Call_Rotate_180(FRotator BeforeRotation, FRotator DesiredRotation);
+
+	//All the Input stuff
 	UPROPERTY()
 	AGS_DungeonGeneration* myDungeonState;
+
+	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
+	UInputMappingContext* myMappingContext;
+
+	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
+	UInputAction* IA_MoveForward;
+
+	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
+	UInputAction* IA_RotateLeftRight;
+
+	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
+	UInputAction* IA_RotateLeftRight180;
+
+	void MoveForward(const FInputActionValue& Value);
+	void RotateLeftRight(const FInputActionValue& Value);
+	void Rotate180(const FInputActionValue& Value);
 
 public:	
 	// Called every frame

@@ -24,7 +24,12 @@ public:
 
 	TArray<TArray<EDungeonGenerationType>> Get_Dungeon_Grid_Info();
 
+	TArray<TArray<bool>> NavigationGrid;
+
 	FOnGridReady OnGridReady;
+
+	bool Can_Move_Forward(int StartX, int StartY, float CurrentYaw);
+	void Moving_Forward(int& StartX, int &StartY, float CurrentYaw);
 
 private:
 	//The 2d array that holds all of the spawn logic when it has to be displayed by HISMs later
