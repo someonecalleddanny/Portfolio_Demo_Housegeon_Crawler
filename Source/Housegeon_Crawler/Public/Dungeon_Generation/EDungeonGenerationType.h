@@ -14,5 +14,6 @@ enum class EDungeonGenerationType : uint8
 	Wall UMETA(DisplayName = "Wall"),
 	Floor UMETA(DisplayName = "Floor"),
 	Spawn UMETA(DisplayName = "Spawn"),
-	EndPoint UMETA(DisplayName = "EndPoint")
+	EndPoint UMETA(DisplayName = "EndPoint"),
+	ChestPOI UMETA(DisplayName = "ChestPOI")
 };

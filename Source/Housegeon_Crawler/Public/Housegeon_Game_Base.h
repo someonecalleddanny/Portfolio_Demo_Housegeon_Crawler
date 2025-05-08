@@ -56,6 +56,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon POIs")
 	int Amount_Of_Dead_Ends = 4;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon POIs")
+	int Amount_Of_Chest_POIs = 1;
+
 	UFUNCTION(BlueprintCallable, Category = "C++ Functions")
 	void Generate_Dungeon(EPathTraversalType TraversalType, EAxisTraversalChoice AxisType, FPathSpawnAreaChoice PathSpawn);
 
@@ -73,11 +76,13 @@ private:
 	//The 2d array that holds all of the spawn logic when it has to be displayed by HISMs later
 	TArray<TArray<EDungeonGenerationType>> DungeonGridInfo;
 
+	//Create all of the points for the paths to go to
 	void Create_Starter_Walls();
 	
 	void Create_Spawn_To_End();
 
 	void Create_Dead_End(int Amount);
+	void Create1x1_ChestPOI(int Amount);
 
 	void Set_Random_End_XY(int& EndX, int& EndY);
 

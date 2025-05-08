@@ -90,9 +90,13 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
 	UInputAction* IA_RotateLeftRight180;
 
+	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
+	UInputAction* IA_Interacted;
+
 	void MoveForward(const FInputActionValue& Value);
 	void RotateLeftRight(const FInputActionValue& Value);
 	void Rotate180(const FInputActionValue& Value);
+	void Interacted(const FInputActionValue& Value);
 
 public:	
 	// Called every frame

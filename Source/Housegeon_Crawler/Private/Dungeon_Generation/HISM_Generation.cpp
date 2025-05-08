@@ -2,6 +2,7 @@
 
 
 #include "Dungeon_Generation/HISM_Generation.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -44,8 +45,21 @@ void AHISM_Generation::BeginPlay()
 void AHISM_Generation::Start_Generation()
 {
 	//Start the dungeon gen
+
+	//First destroy all individual Actors that were spawned
 	if (myDungeonState) 
 	{
+		TArray<AActor*> FoundActors;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), EndpointPOI, FoundActors);
+
+		for (AActor* Actor : FoundActors)
+		{
+			if (Actor)
+			{
+				Actor->Destroy();
+			}
+		}
+
 		HISM_Walls->ClearInstances();
 		HISM_Floors->ClearInstances();
 
@@ -86,32 +100,41 @@ void AHISM_Generation::Display_Everything_From_Dungeon_Grid(TArray<TArray<EDunge
 	{
 		for (int y = 0; y < DungeonGridInfo_PARAM[0].Num(); y++)
 		{
+			WallTransform.SetLocation(Location);
+
+			//Get a random rotation on the z from 90 degree intervals on the Yaw
+			WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
+
+			//The choosing of cells is a bit messy, I'll seperate into another function once more POIs are made
 			//Check if the dungeon grid returns a wall enum type to generate a wall
 			if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Wall)
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("WALL FOUND TO Generate!"));
-				WallTransform.SetLocation(Location);
-
-				//Get a random rotation on the z from 90 degree intervals on the Yaw
-				WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
-
 				HISM_Walls->AddInstance(WallTransform, true);
 			}
 			else if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Floor ||
-				DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Spawn ||
-				DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::EndPoint)
+				DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Spawn)
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("Floor FOUND TO Generate!"));
-				WallTransform.SetLocation(Location);
-
-				//Get a random rotation on the z from 90 degree intervals on the Yaw
-				WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
-
 				HISM_Floors->AddInstance(WallTransform, true);
 			}
+			else if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::ChestPOI) 
 			{
-				//UE_LOG(LogTemp, Error, TEXT("NO WALL FOUND TO Generate!"));
+				//This function will spawn an actor that will contain a wall with a gap within it
+				//Since I haven't made a chest mesh yet, a HISM wall instance will have to do for the time being
+				/*
+					Future Danny, Create a parent POI class, then add the bp class as a UPROPERTY and then spawn actor
+					from class with random rotation etc (POIs have a walkable perimeter so don't worry)
+				*/
+				//UE_LOG(LogTemp, Warning, TEXT("WALL FOUND TO Generate!"));
+				HISM_Walls->AddInstance(WallTransform, true);
 			}
+			else if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::EndPoint) 
+			{
+				// Spawn the actor
+				AActor* SpawnedEnd = GetWorld()->SpawnActor<AActor>(EndpointPOI, WallTransform);
+			}
+			
 			//Once finished with column, got to the next one
 			Location.Y += 400.f;
 		}

@@ -2,6 +2,7 @@
 
 
 #include "Entities/MC.h"
+#include "Interfaces/POI_Interaction.h"
 
 
 // Sets default values
@@ -246,6 +247,53 @@ void AMC::Rotate180(const FInputActionValue& Value)
 	bAbleToMove = false;
 }
 
+void AMC::Interacted(const FInputActionValue& Value)
+{
+	//Get the player controller
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+
+	FMinimalViewInfo CamInfo;
+
+	myCamera->GetCameraView(0.f, CamInfo);
+
+	FVector WorldLocation = CamInfo.Location;
+
+	FVector EndLocation = CamInfo.Rotation.Vector();
+
+	EndLocation.Normalize();
+
+	FVector LineTraceEnd = WorldLocation + (EndLocation * 500.f);
+
+	//Passed as a reference so has to be created here
+	FHitResult HitResult;
+	//same here
+	FCollisionQueryParams CollisionParams;
+
+	//ignore the fact that the line trace might hit the self actor
+	CollisionParams.AddIgnoredActor(this);
+
+	//The actual line trace being created
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, LineTraceEnd,
+		ECollisionChannel::ECC_Visibility, CollisionParams))
+	{
+		DrawDebugLine(GetWorld(), WorldLocation,
+			LineTraceEnd, FColor::Red, false, 2.f, 0, 0.1f);
+
+		if (HitResult.GetActor()) 
+		{
+			if (HitResult.GetActor()->ActorHasTag("POI")) 
+			{
+				IPOI_Interaction* POIInterface = Cast<IPOI_Interaction>(HitResult.GetActor());
+
+				if (POIInterface) 
+				{
+					POIInterface->Interacted();
+				}
+			}
+		}
+	}
+}
+
 // Called every frame
 void AMC::Tick(float DeltaTime)
 {
@@ -263,6 +311,7 @@ void AMC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		AddInputAction->BindAction(IA_MoveForward, ETriggerEvent::Triggered, this, &AMC::MoveForward);
 		AddInputAction->BindAction(IA_RotateLeftRight, ETriggerEvent::Triggered, this, &AMC::RotateLeftRight);
 		AddInputAction->BindAction(IA_RotateLeftRight180, ETriggerEvent::Triggered, this, &AMC::Rotate180);
+		AddInputAction->BindAction(IA_Interacted, ETriggerEvent::Triggered, this, &AMC::Interacted);
 	}
 }
 

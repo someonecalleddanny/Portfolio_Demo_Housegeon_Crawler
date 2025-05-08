@@ -32,6 +32,8 @@ void AHousegeon_Game_Base::Generate_Dungeon(EPathTraversalType TraversalType, EA
 
 	Create_Dead_End(Amount_Of_Dead_Ends);
 
+	Create1x1_ChestPOI(Amount_Of_Chest_POIs);
+
 	//Create all the a to b paths that were put in an array from the created b points in the functions above
 	Create_Path_From_Start_To_End();
 
@@ -109,18 +111,23 @@ void AHousegeon_Game_Base::Create_Spawn_To_End()
 
 void AHousegeon_Game_Base::Create_Dead_End(int Amount)
 {
+	//Check the grid is actually initted
+	if (!(DungeonGridInfo.IsValidIndex(0))) return;
+	if (!(DungeonGridInfo[0].IsValidIndex(0))) return;
+
+	//Keep trying to spawn from the amount that was inputted
 	for (int i = 0; i < Amount; i++) 
 	{
-		//Create the random x and y locations
-		int RandX = FMath::RandRange(0, DungeonGridInfo.Num() - 1);
-		int RandY = FMath::RandRange(0, DungeonGridInfo[0].Num() - 1);
-
 		//Set the max amount of tries to brute force a location to be spawned
 		int MaxTries = 300;
 
 		//Brute force a location by trying multiple times, break when successful
 		for (int Tries = 0; Tries < MaxTries; Tries++) 
 		{
+			//Create the random x and y locations and keep trying to get random locations if fail
+			int RandX = FMath::RandRange(0, DungeonGridInfo.Num() - 1);
+			int RandY = FMath::RandRange(0, DungeonGridInfo[0].Num() - 1);
+
 			//Check if the random spawn is not within a certain bound of the spawn area
 			if (!(RandX >= (Grid_X_Size / 2) - Spawn_Deadzone && RandX <= (Grid_X_Size / 2) + Spawn_Deadzone
 				&& RandY >= (Grid_Y_Size / 2) - Spawn_Deadzone && RandY <= (Grid_Y_Size / 2) + Spawn_Deadzone))
@@ -147,6 +154,110 @@ void AHousegeon_Game_Base::Create_Dead_End(int Amount)
 			{
 				UE_LOG(LogTemp, Error, TEXT("Could Not Find Place for Dead End POI"));
 			}
+		}
+	}
+}
+
+void AHousegeon_Game_Base::Create1x1_ChestPOI(int Amount)
+{
+	//Just realized that I can create any nxn poi, but for now I want to localise it to one function as I don't have time
+	//to optimse for more POI's + only going to be making a Chest POI for the next month.
+
+	/*
+		Future Danny, Are you making another POI? Make this function incorporate multiple POIs!!!
+	*/
+
+	//Check the grid is actually initted
+	if (!(DungeonGridInfo.IsValidIndex(0))) return;
+	if (!(DungeonGridInfo[0].IsValidIndex(0))) return;
+
+	//Get the AABB collision bounds of the 3x3 spawn square + a gap to make sure no paths overlap with spawn
+	int A_SpawnXSize = (Grid_X_Size / 2) - Spawn_Deadzone;
+	int B_SpawnXSize = (Grid_X_Size / 2) + Spawn_Deadzone;
+	int A_SpawnYSize = (Grid_Y_Size / 2) - Spawn_Deadzone;
+	int B_SpawnYSize = (Grid_Y_Size / 2) + Spawn_Deadzone;
+
+	//Keep trying to spawn from the amount that was inputted
+	for (int i = 0; i < Amount; i++) 
+	{
+		//Set the max amount of tries to brute force a location to be spawned
+		int MaxTries = 300;
+
+		//Brute force a location by trying multiple times, break when successful
+		for (int Tries = 0; Tries < MaxTries; Tries++) 
+		{
+			//Create the random x and y locations, keep trying new locations if fail
+			int RandX = FMath::RandRange(0, DungeonGridInfo.Num() - 1);
+			int RandY = FMath::RandRange(0, DungeonGridInfo[0].Num() - 1);
+
+			//This is the walkable perimeter area around the center POI, this will be checked for collision when generating
+			int A_XSize = RandX - 1;
+			int B_XSize = RandX + 1;
+			int A_YSize = RandY - 1;
+			int B_YSize = RandY + 1;
+			
+
+			//if the walkable perimeters ever go outside the array, continue to the next try
+			if (A_XSize < 0 || B_XSize > Grid_X_Size - 1) continue;
+			if (A_YSize < 0 || B_YSize > Grid_Y_Size - 1) continue;
+
+			//Then check if the walkable perimeter overlaps with spawn by doing an AABB collision bounds check
+			bool bOverlapsSpawn =
+				(A_XSize <= B_SpawnXSize && B_XSize >= A_SpawnXSize) &&
+				(A_YSize <= B_SpawnYSize && B_YSize >= A_SpawnYSize);
+
+			if (bOverlapsSpawn)
+				continue; // Skip this location and try again
+
+			bool CanSpawnPOI = true;
+			//Now check if each of the cell locations overlap with any other important structures such as POIs, endpoints
+			for (int XChecker = A_XSize; XChecker <= B_XSize; XChecker++)
+			{
+				for (int YChecker = A_YSize; YChecker <= B_YSize; YChecker++)
+				{
+					//Might look ugly, but check if any of the cell locations are overlapping with important structures
+					//Need to go through for loop here because need to verify each cell
+					//If wall, that is a free space, if floor, that is most likely a dead end space that can be overwritten
+					//If the cell type is neither a wall AND not a floor, set the bool to false to try POI spawn again
+					if (DungeonGridInfo[XChecker][YChecker] != EDungeonGenerationType::Wall
+						&& DungeonGridInfo[XChecker][YChecker] != EDungeonGenerationType::Floor)
+					{
+						//Once once POI cell is corrupted, don't need to check other cells so break this for loop
+						CanSpawnPOI = false;
+						break;
+					}
+						
+				}
+				//Once once POI cell is corrupted, don't need to check other cells so break this for loop
+				if (!CanSpawnPOI) break;
+			}
+
+			//If after check, the POI did overlap with important structures, try again
+			if (!CanSpawnPOI) continue;
+
+			//After all checks, I can now safely place the POI in the desired location with a walkable perimeter
+			//Now check if each of the cell locations overlap with any other important structures such as POIs, endpoints
+			for (int x = A_XSize; x <= B_XSize; x++)
+			{
+				for (int y = A_YSize; y <= B_YSize; y++)
+				{
+					(x == RandX && y == RandY)
+						? DungeonGridInfo[x][y] = EDungeonGenerationType::ChestPOI
+						: DungeonGridInfo[x][y] = EDungeonGenerationType::Floor;
+				}
+			}
+
+			//Once finished with creating the POI break the for loop, because the try has been successful
+
+			//Create the struct and add necessary variables
+			FEnd_Location_Data LocationData;
+			LocationData.X = RandX;
+			LocationData.Y = RandY;
+
+			//Add to the end locations to make path after every POI is created
+			MyEndLocations.Add(LocationData);
+
+			break;
 		}
 	}
 }

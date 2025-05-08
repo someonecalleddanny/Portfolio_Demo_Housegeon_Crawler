@@ -9,6 +9,8 @@
 #include "Dungeon_Generation/EDungeonGenerationType.h"
 #include "Dungeon_Generation/GS_DungeonGeneration.h"
 
+#include "Dungeon_Generation/POI_Base_Class.h"
+
 #include "HISM_Generation.generated.h"
 
 UCLASS()
@@ -30,6 +32,9 @@ protected:
 
 	UPROPERTY()
 	AGS_DungeonGeneration* myDungeonState;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "POIs")
+	TSubclassOf<APOI_Base_Class> EndpointPOI;
 
 	UFUNCTION()
 	void Start_Generation();
