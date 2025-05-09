@@ -91,6 +91,8 @@ private:
 	EPath_Moved Get_Random_Spawn_Point();
 	void Pick_Random_Row_Traversal(EPath_Moved PathMoved, bool bLineTraversal, int Player_Start_Row, int Player_Start_Column,
 		int EndX, int EndY);
+	void Pick_Random_Column_Traversal(EPath_Moved PathMoved, bool bLineTraversal, int Player_Start_Row, int Player_Start_Column,
+		int EndX, int EndY);
 
 
 	//ROW TRAVERSAL:

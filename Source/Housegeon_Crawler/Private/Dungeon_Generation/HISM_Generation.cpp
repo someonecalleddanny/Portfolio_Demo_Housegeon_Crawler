@@ -173,8 +173,11 @@ void AHISM_Generation::Create_Dungeon_Perimeter(TArray<TArray<EDungeonGeneration
 		{
 			WallTransform.SetLocation(Location);
 
+			//I found that making a variable stops weird rotation bugs when switching to quat for this class so ya
+			Rotation = Get_Random_Generation_Rotation();
+
 			//Get a random rotation on the z from 90 degree intervals on the Yaw
-			WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
+			WallTransform.SetRotation(Rotation.Quaternion());
 
 			HISM_Walls->AddInstance(WallTransform, true);
 
@@ -194,10 +197,13 @@ void AHISM_Generation::Create_Dungeon_Perimeter(TArray<TArray<EDungeonGeneration
 
 		for (int y = 0; y < DungeonGridInfo_PARAM[0].Num(); y++) 
 		{
+			//I found that making a variable stops weird rotation bugs when switching to quat for this class so ya
+			Rotation = Get_Random_Generation_Rotation();
+
 			WallTransform.SetLocation(Location);
 
 			//Get a random rotation on the z from 90 degree intervals on the Yaw
-			WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
+			WallTransform.SetRotation(Rotation.Quaternion());
 
 			HISM_Walls->AddInstance(WallTransform, true);
 

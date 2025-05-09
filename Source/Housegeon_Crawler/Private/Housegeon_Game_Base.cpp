@@ -413,76 +413,8 @@ void AHousegeon_Game_Base::Create_Path_From_Start_To_End()
 		}
 		else 
 		{
-			UE_LOG(LogTemp, Display, TEXT("Picked Column Traversal First For Path Pattern!"));
-
-			//Check where the spawn was for the path to start as the algorithms differ slightly as they have to move
-			//Around the 3x3 spawn to make the paths more structured and beautiful
-			switch (PathMoved)
-			{
-				//Spawned left
-			case EPath_Moved::LEFT:
-
-				if (bLineTraversal)
-				{
-					//Do column first line traversal algorithm, input true at start because starting from left
-					SpawnedLeftRight_ColumnFirst_LineTraversal(true, Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y);
-				}
-				else
-				{
-					//Do column based stair traversal, set the bool to true because the path moved is left from spawn
-					SpawnedLeftRight_ColumnFirst_StairTraversal(true, Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
-
-				}
-
-				break;
-
-				//Spawned Right
-			case EPath_Moved::RIGHT:
-				if (bLineTraversal)
-				{
-					//Do column first line traversal algorithm input false at start because starting from right
-					SpawnedLeftRight_ColumnFirst_LineTraversal(false, Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y);
-				}
-				else
-				{
-					//Do column based stair traversal, set the bool to false because the path moved is right from spawn
-					SpawnedLeftRight_ColumnFirst_StairTraversal(false, Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
-				}
-				break;
-
-				//Spawned Up
-			case EPath_Moved::UP:
-				if (bLineTraversal)
-				{
-					SpawnedUpDown_ColumnFirst_LineTraversal(true, Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y);
-				}
-				else 
-				{
-					SpawnedUp_ColumnFirst_StairTraversal(Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
-
-				}
-				break;
-
-				//Spawned Down
-			case EPath_Moved::DOWN:
-				if (bLineTraversal)
-				{
-					SpawnedUpDown_ColumnFirst_LineTraversal(false, Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y);
-				}
-				else
-				{
-					SpawnedDown_ColumnFirst_StairTraversal(Player_Start_Row, Player_Start_Column,
-						MyEndLocations[i].X, MyEndLocations[i].Y, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
-				}
-				break;
-			}
+			Pick_Random_Column_Traversal(PathMoved, bLineTraversal, Player_Start_Row, Player_Start_Column,
+				MyEndLocations[i].X, MyEndLocations[i].Y);
 		}
 	}
 }
@@ -606,6 +538,80 @@ void AHousegeon_Game_Base::Pick_Random_Row_Traversal(EPath_Moved PathMoved, bool
 				EndX, EndY, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
 		}
 
+		break;
+	}
+}
+
+void AHousegeon_Game_Base::Pick_Random_Column_Traversal(EPath_Moved PathMoved, bool bLineTraversal, int Player_Start_Row, int Player_Start_Column, int EndX, int EndY)
+{
+	UE_LOG(LogTemp, Display, TEXT("Picked Column Traversal First For Path Pattern!"));
+
+	//Check where the spawn was for the path to start as the algorithms differ slightly as they have to move
+	//Around the 3x3 spawn to make the paths more structured and beautiful
+	switch (PathMoved)
+	{
+		//Spawned left
+	case EPath_Moved::LEFT:
+
+		if (bLineTraversal)
+		{
+			//Do column first line traversal algorithm, input true at start because starting from left
+			SpawnedLeftRight_ColumnFirst_LineTraversal(true, Player_Start_Row, Player_Start_Column,
+				EndX, EndY);
+		}
+		else
+		{
+			//Do column based stair traversal, set the bool to true because the path moved is left from spawn
+			SpawnedLeftRight_ColumnFirst_StairTraversal(true, Player_Start_Row, Player_Start_Column,
+				EndX, EndY, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
+
+		}
+
+		break;
+
+		//Spawned Right
+	case EPath_Moved::RIGHT:
+		if (bLineTraversal)
+		{
+			//Do column first line traversal algorithm input false at start because starting from right
+			SpawnedLeftRight_ColumnFirst_LineTraversal(false, Player_Start_Row, Player_Start_Column,
+				EndX, EndY);
+		}
+		else
+		{
+			//Do column based stair traversal, set the bool to false because the path moved is right from spawn
+			SpawnedLeftRight_ColumnFirst_StairTraversal(false, Player_Start_Row, Player_Start_Column,
+				EndX, EndY, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
+		}
+		break;
+
+		//Spawned Up
+	case EPath_Moved::UP:
+		if (bLineTraversal)
+		{
+			SpawnedUpDown_ColumnFirst_LineTraversal(true, Player_Start_Row, Player_Start_Column,
+				EndX, EndY);
+		}
+		else
+		{
+			SpawnedUp_ColumnFirst_StairTraversal(Player_Start_Row, Player_Start_Column,
+				EndX, EndY, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
+
+		}
+		break;
+
+		//Spawned Down
+	case EPath_Moved::DOWN:
+		if (bLineTraversal)
+		{
+			SpawnedUpDown_ColumnFirst_LineTraversal(false, Player_Start_Row, Player_Start_Column,
+				EndX, EndY);
+		}
+		else
+		{
+			SpawnedDown_ColumnFirst_StairTraversal(Player_Start_Row, Player_Start_Column,
+				EndX, EndY, FMath::RandRange(2, 3), FMath::RandRange(2, 3));
+		}
 		break;
 	}
 }
