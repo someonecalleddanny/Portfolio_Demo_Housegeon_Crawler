@@ -9,6 +9,8 @@
 
 #include "Dungeon_Generation/GS_DungeonGeneration.h"
 
+#include "Widgets/DungeonViewerWidget.h"
+
 #include "DungeonViewer.generated.h"
 
 UCLASS()
@@ -26,12 +28,37 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void PossessedBy(AController* NewController) override;
+
 	UFUNCTION()
 	void Spawn_At_Center_Grid();
+
+	UFUNCTION()
+	void ZoomInOut(float MouseWheelDelta);
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Dungeon Viewing Settings");
 	float DefaultLength_Multiplier = 500.f;
 
+	UPROPERTY()
+	float CurrentCameraLength = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	float Camera_DefaultLength = 500.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	float Camera_ZoomMultiplier = 20.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	float Min_DefaultLength = 500.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	float Max_DefaultLength = 1000.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	TSubclassOf<UDungeonViewerWidget> DungeonViewerWidgetClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	UDungeonViewerWidget* DungeonViewerWidget;
 
 	UPROPERTY()
 	AGS_DungeonGeneration* myDungeonState;

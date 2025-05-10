@@ -35,6 +35,24 @@ void ADungeonViewer::BeginPlay()
 	}
 }
 
+void ADungeonViewer::PossessedBy(AController* NewController)
+{
+	//Let BP handle it for now because will have to translate a lot of button logic
+	Super::PossessedBy(NewController);
+
+	//I let the BP set the dungeon viewer widget for now, I will convert once the mouse logic is finished and tested
+	if (DungeonViewerWidget) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Found Dungeon Viewer Widget!"));
+
+		DungeonViewerWidget->Call_OnMouseWheel.AddDynamic(this, &ADungeonViewer::ZoomInOut);
+	}
+	else 
+	{
+		UE_LOG(LogTemp, Error, TEXT("NOOT Found Dungeon Viewer Widget!"));
+	}
+}
+
 void ADungeonViewer::Spawn_At_Center_Grid()
 {
 	//Get The dungeon state
@@ -59,14 +77,29 @@ void ADungeonViewer::Spawn_At_Center_Grid()
 			
 			//Set the zoom of the camera to fit the entire grid, the DefaultLength_Multiplier is based on trial and error
 			//to see what looks the best
-			float Length = DefaultLength_Multiplier * (DungeonGridInfo.Num());
+			CurrentCameraLength = DefaultLength_Multiplier * (DungeonGridInfo.Num());
+			Camera_DefaultLength = DefaultLength_Multiplier * (DungeonGridInfo.Num());
 
-
-			mySpringArm->TargetArmLength = Length;
+			mySpringArm->TargetArmLength = CurrentCameraLength;
 
 			SetActorLocation(FVector(Location));
 		}
 	}
+}
+
+void ADungeonViewer::ZoomInOut(float MouseWheelDelta)
+{
+	//Zoom in/out depending on if the mouse wheel goes up or down, the mouse wheel delta is read from the dungeon viewer
+	//widget that has a delegate that is broadcasted everytime the mouse wheel moves which this function is bound to
+	//I minus the length when zooming in because that makes the camera shorten the distance to the center position
+	(MouseWheelDelta > 0.0f) ? CurrentCameraLength -= Camera_ZoomMultiplier : CurrentCameraLength += Camera_ZoomMultiplier;
+
+	//Clamp the length so it can't go too far in or out
+	CurrentCameraLength = FMath::Clamp(CurrentCameraLength, Min_DefaultLength,
+		Camera_DefaultLength + Max_DefaultLength);
+
+	//Set the new target arm length
+	mySpringArm->TargetArmLength = CurrentCameraLength;
 }
 
 // Called every frame
