@@ -8,6 +8,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMouseWheel, float, ScrolledUpDown);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMouseDrag, float, DeltaX, float, DeltaY);
 
 /**
  * 
@@ -19,8 +20,17 @@ class HOUSEGEON_CRAWLER_API UDungeonViewerWidget : public UUserWidget
 
 public:
 	FOnMouseWheel Call_OnMouseWheel;
+	FOnMouseDrag Call_OnMouseDrag;
 
 protected:
 	virtual FReply NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+
+	virtual FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+
+	virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	
+private:
+	bool bCanDrag = false;
 };

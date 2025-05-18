@@ -19,3 +19,41 @@ FReply UDungeonViewerWidget::NativeOnMouseWheel(const FGeometry& InGeometry, con
 
 	return FReply::Handled();
 }
+
+FReply UDungeonViewerWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	//Once the mouse button is down, I can drag the camera with the onmousedrag function
+	if (!bCanDrag)
+	{
+		bCanDrag = true;
+		return FReply::Handled();
+	}
+	return FReply::Unhandled();
+}
+
+FReply UDungeonViewerWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	//Once the mouse button is up, I can stop dragging the camera with the onmousedrag function
+	if (bCanDrag)
+	{
+		bCanDrag = false;
+		return FReply::Handled();
+	}
+	return FReply::Unhandled();
+}
+
+FReply UDungeonViewerWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	if (bCanDrag) 
+	{
+		FVector2D MouseDeltas = InMouseEvent.GetCursorDelta();
+
+		float DeltaX = MouseDeltas.X;
+		float DeltaY = MouseDeltas.Y;
+
+		Call_OnMouseDrag.Broadcast(DeltaX, DeltaY);
+
+		return FReply::Handled();
+	}
+	return FReply::Unhandled();
+}
