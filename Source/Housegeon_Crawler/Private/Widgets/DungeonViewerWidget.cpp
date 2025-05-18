@@ -57,3 +57,12 @@ FReply UDungeonViewerWidget::NativeOnMouseMove(const FGeometry& InGeometry, cons
 	}
 	return FReply::Unhandled();
 }
+
+void UDungeonViewerWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	//Once the widget is destroyed, destroy all delegates
+	Call_OnMouseWheel.Clear();
+	Call_OnMouseDrag.Clear();
+}

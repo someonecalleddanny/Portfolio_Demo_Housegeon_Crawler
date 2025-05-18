@@ -36,6 +36,9 @@ protected:
 	UFUNCTION()
 	void ZoomInOut(float MouseWheelDelta);
 
+	UFUNCTION()
+	void RotateCameraFromWidget(float DeltaX, float DeltaY);
+
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Dungeon Viewing Settings");
 	float DefaultLength_Multiplier = 500.f;
 
@@ -53,6 +56,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
 	float Max_DefaultLength = 1000.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	float CameraYawSensitivity = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	float CameraPitchSensitivity = 0.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
 	TSubclassOf<UDungeonViewerWidget> DungeonViewerWidgetClass;

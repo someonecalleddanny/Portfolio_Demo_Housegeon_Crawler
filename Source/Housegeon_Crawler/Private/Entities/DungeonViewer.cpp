@@ -45,7 +45,10 @@ void ADungeonViewer::PossessedBy(AController* NewController)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Found Dungeon Viewer Widget!"));
 
+		//I bind the delegate on possessed because the widget will be destroyed once unpossessed for the player, so need
+		//to rebind, once the widget is destroyed all bound functions will be destroyed
 		DungeonViewerWidget->Call_OnMouseWheel.AddDynamic(this, &ADungeonViewer::ZoomInOut);
+		DungeonViewerWidget->Call_OnMouseDrag.AddDynamic(this, &ADungeonViewer::RotateCameraFromWidget);
 	}
 	else 
 	{
@@ -100,6 +103,50 @@ void ADungeonViewer::ZoomInOut(float MouseWheelDelta)
 
 	//Set the new target arm length
 	mySpringArm->TargetArmLength = CurrentCameraLength;
+}
+
+void ADungeonViewer::RotateCameraFromWidget(float DeltaX, float DeltaY)
+{
+	/*
+	FRotator NewRotation = GetActorRotation();
+	NewRotation.Roll = 0;
+	//UE_LOG(LogTemp, Warning, TEXT("Rotating Camera: DeltaX = %f"), DeltaX);
+
+	//If the mouse is moving to the right, I want the the camera to move to the left (Inverted Camera View)
+	if (DeltaX > 0.0f) 
+	{
+		NewRotation.Yaw += CameraYawRotatorValue;
+	}
+	//I do an else if for checking left mouse because there is a possibility of the deltaX being 0, so don't want to keep
+	//Moving camera on Yaw
+	else if (DeltaX < 0.0f) 
+	{
+		NewRotation.Yaw -= CameraYawRotatorValue;
+	}
+
+	//Same idea as the yaw but moving the camera up and down when the mouse is dragged
+	if (DeltaY < 0.0f) 
+	{
+		NewRotation.Pitch += CameraPitchRotatorValue;
+	}
+	else if (DeltaY > 0.0f) 
+	{
+		NewRotation.Pitch -= CameraPitchRotatorValue;
+	}
+
+	//Check if the Yaw goes >/< 360/-360 because Unreal does not reset the values
+	if (NewRotation.Yaw > 360.f) NewRotation.Yaw -= 360.f;
+	else if (NewRotation.Yaw < -360.f) NewRotation.Yaw += 360.f;
+
+	//Check if the Pitch goes >/< 360/-360 because Unreal does not reset the values
+	if (NewRotation.Pitch > 360.f) NewRotation.Pitch -= 360.f;
+	else if (NewRotation.Pitch < -360.f) NewRotation.Pitch += 360.f;
+
+	SetActorRotation(NewRotation);
+	*/
+	
+	AddControllerYawInput(DeltaX * CameraYawSensitivity);
+	AddControllerPitchInput(DeltaY * CameraPitchSensitivity);
 }
 
 // Called every frame
