@@ -40,6 +40,8 @@ void ADungeonViewer::PossessedBy(AController* NewController)
 	//Let BP handle it for now because will have to translate a lot of button logic
 	Super::PossessedBy(NewController);
 
+	Reset_Camera();
+
 	//I let the BP set the dungeon viewer widget for now, I will convert once the mouse logic is finished and tested
 	if (DungeonViewerWidget) 
 	{
@@ -58,15 +60,20 @@ void ADungeonViewer::PossessedBy(AController* NewController)
 
 void ADungeonViewer::Spawn_At_Center_Grid()
 {
+	//Set the default rotation for the pawn
+	Reset_Camera();
+
 	//Get The dungeon state
 	TArray<TArray<EDungeonGenerationType>> DungeonGridInfo = myDungeonState->Get_Dungeon_Grid_Info();
 
 	//Set the default rotation for the pawn
+	/*
 	FRotator NewRotation;
-	NewRotation.Yaw = -90.f;
-	NewRotation.Pitch = -40.f;
+	NewRotation.Yaw = Reset_Yaw;
+	NewRotation.Pitch = Reset_Pitch;
 	SetActorRotation(NewRotation);
-
+	*/
+	
 	//Check if the array is valid so no crashes
 	if (DungeonGridInfo.IsValidIndex(0))
 	{
@@ -147,6 +154,25 @@ void ADungeonViewer::RotateCameraFromWidget(float DeltaX, float DeltaY)
 	
 	AddControllerYawInput(DeltaX * CameraYawSensitivity);
 	AddControllerPitchInput(DeltaY * CameraPitchSensitivity);
+}
+
+void ADungeonViewer::Reset_Camera()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Resetting Camera!"));
+
+	//Sets the default camera position after the player mingles with it, Use UPROPERTIES to reset the Yaw and Pitch
+	FRotator ResetRotation;
+	ResetRotation.Yaw = Reset_Yaw;
+	ResetRotation.Pitch = Reset_Pitch;
+
+	//The camera component uses pawn control rotation to bypass gimbal lock to have smooth camera movement
+	if (GetController()) 
+	{
+		GetController()->SetControlRotation(ResetRotation);
+
+		//I set the actor rotation as well in case the camera subsystem lags behind when possessed
+		SetActorRotation(ResetRotation.Quaternion());
+	}
 }
 
 // Called every frame

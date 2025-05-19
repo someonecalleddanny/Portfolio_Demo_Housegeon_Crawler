@@ -39,6 +39,9 @@ protected:
 	UFUNCTION()
 	void RotateCameraFromWidget(float DeltaX, float DeltaY);
 
+	UFUNCTION(BlueprintCallable, Category = "C++ Functions")
+	void Reset_Camera();
+
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Dungeon Viewing Settings");
 	float DefaultLength_Multiplier = 500.f;
 
@@ -68,6 +71,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
 	UDungeonViewerWidget* DungeonViewerWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	float Reset_Yaw = -90.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	float Reset_Pitch = -40.f;
 
 	UPROPERTY()
 	AGS_DungeonGeneration* myDungeonState;
