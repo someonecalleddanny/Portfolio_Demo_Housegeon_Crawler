@@ -3,6 +3,13 @@
 
 #include "Widgets/DungeonViewerWidget.h"
 
+void UDungeonViewerWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	ResetCameraButton->OnClicked.AddDynamic(this, &UDungeonViewerWidget::OnCameraButtonClicked);
+}
+
 FReply UDungeonViewerWidget::NativeOnMouseWheel(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	//Get the wheel delta, if > 0 means positive which means it is going up
@@ -65,4 +72,10 @@ void UDungeonViewerWidget::NativeDestruct()
 	//Once the widget is destroyed, destroy all delegates
 	Call_OnMouseWheel.Clear();
 	Call_OnMouseDrag.Clear();
+	Call_OnResetCamera.Clear();
+}
+
+void UDungeonViewerWidget::OnCameraButtonClicked()
+{
+	Call_OnResetCamera.Broadcast();
 }

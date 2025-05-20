@@ -51,6 +51,7 @@ void ADungeonViewer::PossessedBy(AController* NewController)
 		//to rebind, once the widget is destroyed all bound functions will be destroyed
 		DungeonViewerWidget->Call_OnMouseWheel.AddDynamic(this, &ADungeonViewer::ZoomInOut);
 		DungeonViewerWidget->Call_OnMouseDrag.AddDynamic(this, &ADungeonViewer::RotateCameraFromWidget);
+		DungeonViewerWidget->Call_OnResetCamera.AddDynamic(this, &ADungeonViewer::Reset_Camera);
 	}
 	else 
 	{
@@ -63,28 +64,24 @@ void ADungeonViewer::Spawn_At_Center_Grid()
 	//Set the default rotation for the pawn
 	Reset_Camera();
 
+	//Now Set the camera using information from the game state
+
 	//Get The dungeon state
 	TArray<TArray<EDungeonGenerationType>> DungeonGridInfo = myDungeonState->Get_Dungeon_Grid_Info();
 
-	//Set the default rotation for the pawn
-	/*
-	FRotator NewRotation;
-	NewRotation.Yaw = Reset_Yaw;
-	NewRotation.Pitch = Reset_Pitch;
-	SetActorRotation(NewRotation);
-	*/
-	
 	//Check if the array is valid so no crashes
 	if (DungeonGridInfo.IsValidIndex(0))
 	{
 		if (DungeonGridInfo[0].IsValidIndex(0))
 		{
-			FVector Location;
+			//Old code: For some reason, using this in Reset_Camera and using the delegate to reset the camera would
+			// fudge the location of the camera so use a private property instead called defaultcameralocation
+			//FVector Location;
 
 			//Each cube/cell is 400x400, by getting half the array size of grid = center
-			Location.X = (DungeonGridInfo.Num() / 2) * 400.f;
-			Location.Y = (DungeonGridInfo[0].Num() / 2) * 400.f;
-			
+			DefaultCameraLocation.X = (DungeonGridInfo.Num() / 2) * 400.f;
+			DefaultCameraLocation.Y = (DungeonGridInfo[0].Num() / 2) * 400.f;
+
 			//Set the zoom of the camera to fit the entire grid, the DefaultLength_Multiplier is based on trial and error
 			//to see what looks the best
 			CurrentCameraLength = DefaultLength_Multiplier * (DungeonGridInfo.Num());
@@ -92,7 +89,7 @@ void ADungeonViewer::Spawn_At_Center_Grid()
 
 			mySpringArm->TargetArmLength = CurrentCameraLength;
 
-			SetActorLocation(FVector(Location));
+			SetActorLocation(FVector(DefaultCameraLocation));
 		}
 	}
 }
@@ -173,6 +170,15 @@ void ADungeonViewer::Reset_Camera()
 		//I set the actor rotation as well in case the camera subsystem lags behind when possessed
 		SetActorRotation(ResetRotation.Quaternion());
 	}
+
+	//Set the actor to the middle of the grid by using a private property which is set when the dungeon is generated
+	SetActorLocation(FVector(DefaultCameraLocation));
+
+	//Reset the zoom by setting the current length to the default length, do this because when you scroll it sets
+	//the current length to a value to set for the spring arm. Lamens terms, it current length needs to be reset because
+	//it is changed elsewhere. Then, set the springarm to the new default current length
+	CurrentCameraLength = Camera_DefaultLength;
+	mySpringArm->TargetArmLength = CurrentCameraLength;
 }
 
 // Called every frame

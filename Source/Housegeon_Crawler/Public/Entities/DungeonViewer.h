@@ -89,6 +89,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+
+	FVector DefaultCameraLocation;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* mySpringArm;
 
