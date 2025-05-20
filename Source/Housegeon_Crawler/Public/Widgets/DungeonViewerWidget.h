@@ -27,6 +27,8 @@ public:
 	FOnMouseDrag Call_OnMouseDrag;
 	FOnCameraButtonClicked Call_OnResetCamera;
 
+	void SetResetCameraVisibility(bool bIsVisible);
+
 protected:
 
 	virtual void NativeConstruct() override;

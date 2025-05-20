@@ -40,6 +40,7 @@ void ADungeonViewer::PossessedBy(AController* NewController)
 	//Let BP handle it for now because will have to translate a lot of button logic
 	Super::PossessedBy(NewController);
 
+	//When the player switches to the dungeon viewer pawn (this), I want to reset the camera transform to default
 	Reset_Camera();
 
 	//I let the BP set the dungeon viewer widget for now, I will convert once the mouse logic is finished and tested
@@ -96,6 +97,13 @@ void ADungeonViewer::Spawn_At_Center_Grid()
 
 void ADungeonViewer::ZoomInOut(float MouseWheelDelta)
 {
+	//If the button to reset the camera is not visible in the widget, then make it visible as just changed camera transform
+	if (!bShowResetCamera)
+	{
+		bShowResetCamera = true;
+		DungeonViewerWidget->SetResetCameraVisibility(bShowResetCamera);
+	}
+
 	//Zoom in/out depending on if the mouse wheel goes up or down, the mouse wheel delta is read from the dungeon viewer
 	//widget that has a delegate that is broadcasted everytime the mouse wheel moves which this function is bound to
 	//I minus the length when zooming in because that makes the camera shorten the distance to the center position
@@ -149,12 +157,61 @@ void ADungeonViewer::RotateCameraFromWidget(float DeltaX, float DeltaY)
 	SetActorRotation(NewRotation);
 	*/
 	
+	//If the button to reset the camera is not visible in the widget, then make it visible as just changed camera transform
+	if (!bShowResetCamera) 
+	{
+		bShowResetCamera = true;
+		DungeonViewerWidget->SetResetCameraVisibility(bShowResetCamera);
+	}
+
 	AddControllerYawInput(DeltaX * CameraYawSensitivity);
-	AddControllerPitchInput(DeltaY * CameraPitchSensitivity);
+
+	float Pitch = GetControlRotation().Pitch;
+
+	// Normalise the control rotation pitch to only be within a positive bound
+	if (Pitch > 180.f)
+	{
+		Pitch -= 360.f;
+	}
+
+	//Then... Check if pitch is less than min pitch (A negative value allows the camera to go up)
+	if (Pitch < Min_Pitch)
+	{
+		AddControllerPitchInput(DeltaY * CameraPitchSensitivity);
+	}
+	else if (DeltaY > 0.0f) //If below the min, Only allow a positive y delta so that the camera can move up
+	{
+		AddControllerPitchInput(DeltaY * CameraPitchSensitivity);
+	}
+
+	//Once again have to normalise the pitch
+	Pitch = GetControlRotation().Pitch;
+
+	// Normalise the control rotation pitch to only be within a positive bound
+	if (Pitch > 180.f)
+	{
+		Pitch -= 360.f;
+	}
+	//Clamp the pitch so that mouse acceleration cannot go further than the min pitch (from the mouse y delta)
+	Pitch = FMath::Clamp(Pitch, -90.f, Min_Pitch);
+
+	//Create a normalised rotator to add the clamped pitch to the control rotation
+	FRotator NormalisedRotation = GetControlRotation();
+	NormalisedRotation.Pitch = Pitch;
+
+	//Then, set the control rotation from the normalisedrotation with the clamped pitch
+	GetController()->SetControlRotation(NormalisedRotation);
 }
 
 void ADungeonViewer::Reset_Camera()
 {
+	//If the button to reset the camera is visible in the widget, then make it collapsed
+	if (bShowResetCamera)
+	{
+		bShowResetCamera = false;
+		DungeonViewerWidget->SetResetCameraVisibility(bShowResetCamera);
+	}
+
 	UE_LOG(LogTemp, Warning, TEXT("Resetting Camera!"));
 
 	//Sets the default camera position after the player mingles with it, Use UPROPERTIES to reset the Yaw and Pitch

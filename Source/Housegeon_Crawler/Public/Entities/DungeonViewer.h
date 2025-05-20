@@ -78,6 +78,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
 	float Reset_Pitch = -40.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Viewing Settings");
+	float Min_Pitch = -5.f;
+
 	UPROPERTY()
 	AGS_DungeonGeneration* myDungeonState;
 
@@ -90,7 +93,9 @@ public:
 
 private:
 
+	//Camera Logic
 	FVector DefaultCameraLocation;
+	bool bShowResetCamera = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* mySpringArm;

@@ -3,6 +3,13 @@
 
 #include "Widgets/DungeonViewerWidget.h"
 
+void UDungeonViewerWidget::SetResetCameraVisibility(bool bIsVisible)
+{
+	(bIsVisible)
+		? ResetCameraButton->SetVisibility(ESlateVisibility::Visible)
+		: ResetCameraButton->SetVisibility(ESlateVisibility::Hidden);
+}
+
 void UDungeonViewerWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -30,7 +37,7 @@ FReply UDungeonViewerWidget::NativeOnMouseWheel(const FGeometry& InGeometry, con
 FReply UDungeonViewerWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	//Once the mouse button is down, I can drag the camera with the onmousedrag function
-	if (!bCanDrag)
+	if (!bCanDrag && InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
 		bCanDrag = true;
 		return FReply::Handled();
@@ -41,7 +48,7 @@ FReply UDungeonViewerWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry
 FReply UDungeonViewerWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	//Once the mouse button is up, I can stop dragging the camera with the onmousedrag function
-	if (bCanDrag)
+	if (bCanDrag && InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
 		bCanDrag = false;
 		return FReply::Handled();
@@ -51,17 +58,27 @@ FReply UDungeonViewerWidget::NativeOnMouseButtonUp(const FGeometry& InGeometry, 
 
 FReply UDungeonViewerWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
+	//Get the mouse deltas
+	FVector2D MouseDeltas = InMouseEvent.GetCursorDelta();
+	float DeltaX = MouseDeltas.X; 
+	float DeltaY = MouseDeltas.Y;
+
+	//Check if able to drag. Set within the OnMouseDown function
 	if (bCanDrag) 
 	{
-		FVector2D MouseDeltas = InMouseEvent.GetCursorDelta();
+		//Check if both mouse deltas aren't 0.0f (Meaning that the mouse has not been moved). Added an error tolerance
+		//of 0.1 because I want large mouse strokes to count as dragging.
+		if (!(FMath::IsNearlyEqual(DeltaX, 0.0f, 0.1) && FMath::IsNearlyEqual(DeltaY, 0.0f, 0.1)))
+		{
+			//Broadcast to the DungeonViewer pawn to respond to the mouse movement
+			Call_OnMouseDrag.Broadcast(DeltaX, DeltaY);
 
-		float DeltaX = MouseDeltas.X;
-		float DeltaY = MouseDeltas.Y;
-
-		Call_OnMouseDrag.Broadcast(DeltaX, DeltaY);
-
-		return FReply::Handled();
+			//Finally return handled
+			return FReply::Handled();
+		}	
 	}
+
+	//if all the checks fail, return unhandled
 	return FReply::Unhandled();
 }
 
@@ -77,5 +94,6 @@ void UDungeonViewerWidget::NativeDestruct()
 
 void UDungeonViewerWidget::OnCameraButtonClicked()
 {
+	//Broadcast a call to the Dungeon Viewer pawn to reset the actor's transform to the default position
 	Call_OnResetCamera.Broadcast();
 }
