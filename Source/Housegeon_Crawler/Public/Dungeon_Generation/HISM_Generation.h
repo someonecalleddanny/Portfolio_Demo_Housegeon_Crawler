@@ -36,6 +36,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "POIs")
 	TSubclassOf<APOI_Base_Class> EndpointPOI;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "POIs")
+	TSubclassOf<APOI_Base_Class> CompassPOI;
+
 	UFUNCTION()
 	void Start_Generation();
 

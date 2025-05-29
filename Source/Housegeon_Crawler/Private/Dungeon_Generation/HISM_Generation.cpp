@@ -105,21 +105,24 @@ void AHISM_Generation::Display_Everything_From_Dungeon_Grid(TArray<TArray<EDunge
 			//Get a random rotation on the z from 90 degree intervals on the Yaw
 			WallTransform.SetRotation(FQuat(Get_Random_Generation_Rotation()));
 
-			//The choosing of cells is a bit messy, I'll seperate into another function once more POIs are made
-			//Check if the dungeon grid returns a wall enum type to generate a wall
-			if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Wall)
+			//Go through a switch case to determine what to spawn
+			switch (DungeonGridInfo_PARAM[x][y]) 
 			{
-				//UE_LOG(LogTemp, Warning, TEXT("WALL FOUND TO Generate!"));
-				HISM_Walls->AddInstance(WallTransform, true);
-			}
-			else if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Floor ||
-				DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::Spawn)
-			{
-				//UE_LOG(LogTemp, Warning, TEXT("Floor FOUND TO Generate!"));
+
+			case EDungeonGenerationType::Floor:
 				HISM_Floors->AddInstance(WallTransform, true);
-			}
-			else if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::ChestPOI) 
-			{
+				break;
+
+			case EDungeonGenerationType::Wall:
+				HISM_Walls->AddInstance(WallTransform, true);
+				break;
+
+			case EDungeonGenerationType::EndPoint:
+				// Spawn the endpoint actor
+				GetWorld()->SpawnActor<AActor>(EndpointPOI, WallTransform);
+				break;
+
+			case EDungeonGenerationType::ChestPOI:
 				//This function will spawn an actor that will contain a wall with a gap within it
 				//Since I haven't made a chest mesh yet, a HISM wall instance will have to do for the time being
 				/*
@@ -128,13 +131,14 @@ void AHISM_Generation::Display_Everything_From_Dungeon_Grid(TArray<TArray<EDunge
 				*/
 				//UE_LOG(LogTemp, Warning, TEXT("WALL FOUND TO Generate!"));
 				HISM_Walls->AddInstance(WallTransform, true);
+				break;
+
+			//If another type of generation, just make it a floor (Currently spawn and floor gen type)
+			default:
+				HISM_Floors->AddInstance(WallTransform, true);
+				break;
 			}
-			else if (DungeonGridInfo_PARAM[x][y] == EDungeonGenerationType::EndPoint) 
-			{
-				// Spawn the actor
-				AActor* SpawnedEnd = GetWorld()->SpawnActor<AActor>(EndpointPOI, WallTransform);
-			}
-			
+
 			//Once finished with column, got to the next one
 			Location.Y += 400.f;
 		}
@@ -143,6 +147,9 @@ void AHISM_Generation::Display_Everything_From_Dungeon_Grid(TArray<TArray<EDunge
 		//Once finished with the row, go to the next one
 		Location.X += 400.f;
 	}
+
+	//Then add the compass actor that helps the player navigate the map
+	//GetWorld()->SpawnActor<AActor>(CompassPOI, WallTransform);
 
 	//Once finished with the generation of the dungeon, now create a perimeter
 	Create_Dungeon_Perimeter(DungeonGridInfo_PARAM);
