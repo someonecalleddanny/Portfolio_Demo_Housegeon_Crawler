@@ -41,7 +41,14 @@ protected:
 
 	virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+
+	virtual FReply NativeOnKeyUp(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+
 	virtual void NativeDestruct() override;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "C++ Events")
+	void Call_WidgetExitEvent();
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	UButton* ResetCameraButton;
@@ -51,4 +58,5 @@ protected:
 	
 private:
 	bool bCanDrag = false;
+	bool bKeyAlreadyDown = false;
 };

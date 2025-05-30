@@ -311,7 +311,7 @@ void AMC::SetRandomSpawnRotation()
 	//Once I am comfortable with the navigation working, I will come back to this when I figure out how to 
 	//translate relative rotations with 0 being forward on the navigation grid (This will be priority when coding
 	//AI)
-	FRotator CustomRotationSpawn;
+	FRotator CustomRotationSpawn (0.0f, 0.0f, 0.0f);
 	
 
 	int RandSpawn = FMath::RandRange(0, 3);

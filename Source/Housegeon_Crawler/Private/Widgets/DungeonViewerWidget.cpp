@@ -82,6 +82,40 @@ FReply UDungeonViewerWidget::NativeOnMouseMove(const FGeometry& InGeometry, cons
 	return FReply::Unhandled();
 }
 
+FReply UDungeonViewerWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	//Check if the key was already pressed because this event keeps firing when a key is pressed
+	if (!bKeyAlreadyDown) 
+	{
+		//Set to true so that the event can't keep firing when the jey is down
+		bKeyAlreadyDown = true;
+		//When pressing M the widget will delete, but this will be called within the bp because I use the level bp to
+		//Enable the post processing when going back to player possession
+		if (InKeyEvent.GetKey() == EKeys::M)
+		{
+			Call_WidgetExitEvent();
+		}
+
+		//Finally return handled
+		return FReply::Handled();
+	}
+
+	return FReply::Unhandled();
+}
+
+FReply UDungeonViewerWidget::NativeOnKeyUp(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (bKeyAlreadyDown) 
+	{
+		bKeyAlreadyDown = false;
+
+		//Finally return handled
+		return FReply::Handled();
+	}
+
+	return FReply::Unhandled();
+}
+
 void UDungeonViewerWidget::NativeDestruct()
 {
 	Super::NativeDestruct();

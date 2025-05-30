@@ -177,7 +177,7 @@ void AHISM_Generation::Create_Dungeon_Perimeter(TArray<TArray<EDungeonGeneration
 	FVector Location(-400.0f, -400.0f, 0.0f);
 
 	//Forward declare rotation
-	FRotator Rotation;
+	FRotator Rotation(0.0f,0.0f,0.0f);
 
 	for (int i = 0; i < 2; i++) 
 	{
