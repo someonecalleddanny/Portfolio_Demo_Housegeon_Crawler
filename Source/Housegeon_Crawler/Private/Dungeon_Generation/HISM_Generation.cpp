@@ -50,7 +50,10 @@ void AHISM_Generation::Start_Generation()
 	if (myDungeonState) 
 	{
 		TArray<AActor*> FoundActors;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), EndpointPOI, FoundActors);
+
+		//Get all of the actors that derive from APOI_Base_Class, The idea is that when the level is regenerated,
+		//...All of the previous POI actors will have to be detroyed and made a new
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APOI_Base_Class::StaticClass(), FoundActors);
 
 		for (AActor* Actor : FoundActors)
 		{
@@ -60,6 +63,7 @@ void AHISM_Generation::Start_Generation()
 			}
 		}
 
+		//Deleting mesh instances is simpler, just clear the instances of the HISM stack
 		HISM_Walls->ClearInstances();
 		HISM_Floors->ClearInstances();
 
@@ -109,12 +113,17 @@ void AHISM_Generation::Display_Everything_From_Dungeon_Grid(TArray<TArray<EDunge
 			switch (DungeonGridInfo_PARAM[x][y]) 
 			{
 
-			case EDungeonGenerationType::Floor:
-				HISM_Floors->AddInstance(WallTransform, true);
-				break;
-
 			case EDungeonGenerationType::Wall:
 				HISM_Walls->AddInstance(WallTransform, true);
+				break;
+
+			case EDungeonGenerationType::Spawn:
+				//Add the spawn in the middle
+				HISM_Floors->AddInstance(WallTransform, true);
+
+				//Then, add the compass, Since I want the compass to be accurate, I will reset the rotation to 0.0f
+				WallTransform.SetRotation(FQuat(FRotator(0.0f, 0.0f, 0.0f)));
+				GetWorld()->SpawnActor<AActor>(CompassPOI, WallTransform);
 				break;
 
 			case EDungeonGenerationType::EndPoint:
@@ -133,7 +142,7 @@ void AHISM_Generation::Display_Everything_From_Dungeon_Grid(TArray<TArray<EDunge
 				HISM_Walls->AddInstance(WallTransform, true);
 				break;
 
-			//If another type of generation, just make it a floor (Currently spawn and floor gen type)
+			//If another type of generation, just make it a floor
 			default:
 				HISM_Floors->AddInstance(WallTransform, true);
 				break;

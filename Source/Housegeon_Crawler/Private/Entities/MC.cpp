@@ -70,22 +70,11 @@ void AMC::Spawn_At_Center_Grid()
 
 			SetActorLocation(FVector(Location));
 
-			//Unreal's rotation system is crap so I am brute forcing my normalised rotation for every actor spawned to face
-			//0,0 of the grid which is the top left, testing I found yaw -90 faces that with my player so set it to this
-			//Once I am comfortable with the navigation working, I will come back to this when I figure out how to 
-			//translate relative rotations with 0 being forward on the navigation grid (This will be priority when coding
-			//AI)
-			FRotator CustomRotationSpawn;
-			CustomRotationSpawn.Yaw = -90;
-
-			SetActorRotation(FQuat(CustomRotationSpawn));
+			SetRandomSpawnRotation();
 
 			//Then update the navigation grid to notify that the center location is occupied by the player
 			myGridTransform.X = DungeonGridInfo.Num() / 2;
 			myGridTransform.Y = DungeonGridInfo[0].Num() / 2;
-
-			//Create a normalised rotation, (useful for when checking navigation grid)
-			myGridTransform.NormalizedYaw = 0;
 
 			//For now, won't add logic to update walked on/off grids, that's for later with AI
 
@@ -313,5 +302,43 @@ void AMC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		AddInputAction->BindAction(IA_RotateLeftRight180, ETriggerEvent::Triggered, this, &AMC::Rotate180);
 		AddInputAction->BindAction(IA_Interacted, ETriggerEvent::Triggered, this, &AMC::Interacted);
 	}
+}
+
+void AMC::SetRandomSpawnRotation()
+{
+	//Unreal's rotation system is crap so I am brute forcing my normalised rotation for every actor spawned to face
+	//0,0 of the grid which is the top left, testing I found yaw -90 faces that with my player so set it to this
+	//Once I am comfortable with the navigation working, I will come back to this when I figure out how to 
+	//translate relative rotations with 0 being forward on the navigation grid (This will be priority when coding
+	//AI)
+	FRotator CustomRotationSpawn;
+	
+
+	int RandSpawn = FMath::RandRange(0, 3);
+
+	switch (RandSpawn) 
+	{
+	case 0:
+		CustomRotationSpawn.Yaw = -90;
+		//Create a normalised rotation, (useful for when checking navigation grid), 0 means forward
+		myGridTransform.NormalizedYaw = 0.f;
+
+	case 1:
+		CustomRotationSpawn.Yaw = 0.0f;
+		//Create a normalised rotation, (useful for when checking navigation grid), 90 means right
+		myGridTransform.NormalizedYaw = 90.f;
+
+	case 2:
+		CustomRotationSpawn.Yaw = 90.0f;
+		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
+		myGridTransform.NormalizedYaw = 180.f;
+
+	case 3:
+		CustomRotationSpawn.Yaw = 180.0f;
+		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
+		myGridTransform.NormalizedYaw = 270.f;
+	}
+
+	SetActorRotation(FQuat(CustomRotationSpawn));
 }
 

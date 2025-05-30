@@ -28,6 +28,7 @@ void AHousegeon_Game_Base::Generate_Dungeon(EPathTraversalType TraversalType, EA
 	//(This function sets the size of DungeonGridInfo)
 	Create_Starter_Walls();
 
+	//Create the Spawn location (center) + a 3x3 area around it as well as marking the endpoint randomly
 	Create_Spawn_To_End();
 
 	Create_Dead_End(Amount_Of_Dead_Ends);
@@ -58,7 +59,7 @@ void AHousegeon_Game_Base::Create_Spawn_To_End()
 	int Start_X = DungeonGridInfo.Num() / 2;
 	int Start_Y = DungeonGridInfo[0].Num() / 2;
 
-	//Create a 3x3 square around the spawn point, just to make the spawn look good
+	//Create a 3x3 walkable square around the spawn point, just to make the spawn look good for traversal
 	for (int x = Start_X - 1; x < Start_X + 2; x++)
 	{
 		for (int y = Start_Y - 1; y < Start_Y + 2; y++)
@@ -67,11 +68,15 @@ void AHousegeon_Game_Base::Create_Spawn_To_End()
 			{
 				if (DungeonGridInfo[x].IsValidIndex(y)) 
 				{
-					DungeonGridInfo[x][y] = EDungeonGenerationType::Spawn;
+					DungeonGridInfo[x][y] = EDungeonGenerationType::Floor;
 				}
 			}
 		}
 	}
+
+	//Then, after making the 3x3 floor, I want the center to be the spawn as the center spawn will
+	//Have unique properties such as adding unique things to that location such as a compass for the map viewer
+	DungeonGridInfo[Start_X][Start_Y] = EDungeonGenerationType::Spawn;
 
 	//Init the end point for the grid
 	int EndX;
