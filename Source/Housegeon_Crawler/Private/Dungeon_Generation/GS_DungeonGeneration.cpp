@@ -56,6 +56,27 @@ void AGS_DungeonGeneration::UpdateOldMovementCell(FIntPoint CellInfo)
     NavigationGrid[CellInfo.X][CellInfo.Y] = true;
 }
 
+FIntPoint AGS_DungeonGeneration::GetPlayerCoords()
+{
+    return CurrentPlayerCoords;
+}
+
+void AGS_DungeonGeneration::UpdatePlayerCoords(AActor* PlayerRef, FIntPoint NewCoords)
+{
+    //First check if the actor is what the current player controller is controlling
+
+    if (PlayerRef == GetWorld()->GetFirstPlayerController()->GetPawn()) 
+    {
+        UE_LOG(LogTemp, Display, TEXT("Successfully Updated Player Coords in GS"));
+        CurrentPlayerCoords = NewCoords;
+
+    }
+    else 
+    {
+        UE_LOG(LogTemp, Error, TEXT("Wrong actor tried to Update Player Coords in GS"));
+    }
+}
+
 TArray<TArray<EDungeonGenerationType>> AGS_DungeonGeneration::Get_Dungeon_Grid_Info()
 {
 	return DungeonGridInfo;

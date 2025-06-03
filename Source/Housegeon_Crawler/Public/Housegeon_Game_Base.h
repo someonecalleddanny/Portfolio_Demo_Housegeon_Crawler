@@ -11,6 +11,8 @@
 
 #include "Dungeon_Generation/FPathSpawnAreaChoice.h"
 
+#include "Dungeon_Generation/FEnemySpawnData.h"
+
 #include "Housegeon_Game_Base.generated.h"
 
 //Create a struct that holds all of the end points for the path traversal when making the paths
@@ -53,6 +55,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "C++ Generation Logic")
 	int Spawn_Deadzone = 2;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "C++ Generation Logic")
+	TMap<int, FEnemySpawnData> EnemiesToSpawn;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon POIs")
 	int Amount_Of_Dead_Ends = 4;
 
@@ -61,6 +66,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "C++ Functions")
 	void Generate_Dungeon(EPathTraversalType TraversalType, EAxisTraversalChoice AxisType, FPathSpawnAreaChoice PathSpawn);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Options")
+	int CurrentLevel = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Options")
 	EPathTraversalType ChoiceOfTraversal;

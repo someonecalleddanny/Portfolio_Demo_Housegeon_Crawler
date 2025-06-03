@@ -182,10 +182,18 @@ void AMC::Manual_MoveForward()
 	{
 		UE_LOG(LogTemp, Display, TEXT("MOVING FORWARD!!!"));
 
+		//Make the previous cell movable for all entities
 		myDungeonState->UpdateOldMovementCell(OldCell);
 
+		//Now move the player coords forward by checking the normalised yaw from the player, Passed by reference,
+		//meaning the x and y values will be changed
 		myDungeonState->Moving_Forward(myGridTransform.X, myGridTransform.Y, myGridTransform.NormalizedYaw);
 
+		//After the coords above have been changed, update the global player coords for the enemy AI to track where the
+		//player is
+		myDungeonState->UpdatePlayerCoords(this, FIntPoint(myGridTransform.X, myGridTransform.Y));
+
+		//Update the new old cell to the current cell that the player is within
 		OldCell.X = myGridTransform.X;
 		OldCell.Y = myGridTransform.Y;
 
