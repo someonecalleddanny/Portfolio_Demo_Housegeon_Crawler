@@ -125,6 +125,9 @@ void AMC::Spawn_At_Center_Grid()
 			/*
 				TO DO: Add the walk on/ walk off grid once AI is started
 			*/
+
+			OldCell.X = DungeonGridInfo.Num() / 2;
+			OldCell.Y = DungeonGridInfo[0].Num() / 2;
 		}
 		
 	}
@@ -179,7 +182,12 @@ void AMC::Manual_MoveForward()
 	{
 		UE_LOG(LogTemp, Display, TEXT("MOVING FORWARD!!!"));
 
+		myDungeonState->UpdateOldMovementCell(OldCell);
+
 		myDungeonState->Moving_Forward(myGridTransform.X, myGridTransform.Y, myGridTransform.NormalizedYaw);
+
+		OldCell.X = myGridTransform.X;
+		OldCell.Y = myGridTransform.Y;
 
 		//Set to false so the timeline can do the movement animation, set to true on finished in BP
 		bAbleToMove = false;
@@ -200,7 +208,8 @@ void AMC::Manual_MoveForward()
 			GetActorLocation(),
 			800.f,
 			1000.f,
-			1.f
+			1.f,
+			false
 		);
 
 		//Set the start/end lerp locations which will be used in the movementtimeline event

@@ -171,6 +171,10 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+
+	//Player Grid Movement
+	FIntPoint OldCell;
+
 	void SetRandomSpawnRotation();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))

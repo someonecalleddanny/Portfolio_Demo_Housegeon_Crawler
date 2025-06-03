@@ -18,6 +18,44 @@ void AGS_DungeonGeneration::Set_Dungeon_Grid_Info(TArray<TArray<EDungeonGenerati
 	}
 }
 
+void AGS_DungeonGeneration::SetPlayerSpawnInformation(FIntPoint PlayerCellInfo)
+{
+    //First check if the inputted cell info is within bounds to avoid crashing
+    if (!(NavigationGrid.IsValidIndex(PlayerCellInfo.X))) 
+    {
+        UE_LOG(LogTemp, Error, TEXT("The X Spawn Cells where not in range for the navigation grid"));
+        return;
+    }
+    else if (!(NavigationGrid[PlayerCellInfo.X].IsValidIndex(PlayerCellInfo.Y))) 
+    {
+        UE_LOG(LogTemp, Error, TEXT("The Y Spawn Cells where not in range for the navigation grid"));
+        return;
+    }
+    //Set the player spawn info by updating the currentplayercoords to the inputted player cell info
+    CurrentPlayerCoords = PlayerCellInfo;
+    
+    //Make the spawn area not movable to any other entities
+    NavigationGrid[CurrentPlayerCoords.X][CurrentPlayerCoords.Y] = false;
+}
+
+void AGS_DungeonGeneration::UpdateOldMovementCell(FIntPoint CellInfo)
+{
+    //First check if the inputted cell info is within bounds to avoid crashing
+    if (!(NavigationGrid.IsValidIndex(CellInfo.X)))
+    {
+        UE_LOG(LogTemp, Error, TEXT("The X Spawn Cells where not in range for the navigation grid"));
+        return;
+    }
+    else if (!(NavigationGrid[CellInfo.X].IsValidIndex(CellInfo.Y)))
+    {
+        UE_LOG(LogTemp, Error, TEXT("The Y Spawn Cells where not in range for the navigation grid"));
+        return;
+    }
+
+    //Make the old cell movable by setting the variable at the index location to true
+    NavigationGrid[CellInfo.X][CellInfo.Y] = true;
+}
+
 TArray<TArray<EDungeonGenerationType>> AGS_DungeonGeneration::Get_Dungeon_Grid_Info()
 {
 	return DungeonGridInfo;
@@ -96,4 +134,7 @@ void AGS_DungeonGeneration::Moving_Forward(int& StartX, int& StartY, float Curre
     {
         StartX++;
     }
+
+    //After moving to the new location, set that cell to not be movable as there is an entity on it
+    NavigationGrid[StartX][StartY] = false;
 }

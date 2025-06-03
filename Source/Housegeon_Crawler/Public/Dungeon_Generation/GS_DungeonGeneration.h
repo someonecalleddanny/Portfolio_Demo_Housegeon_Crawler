@@ -7,6 +7,8 @@
 
 #include "Dungeon_Generation/EDungeonGenerationType.h"
 
+#include "Math/IntPoint.h"
+
 #include "GS_DungeonGeneration.generated.h"
 
 
@@ -22,11 +24,18 @@ class HOUSEGEON_CRAWLER_API AGS_DungeonGeneration : public AGameStateBase
 public:
 	void Set_Dungeon_Grid_Info(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_Param);
 
+	void SetPlayerSpawnInformation(FIntPoint PlayerCellInfo);
+
+	//Make the cell that the entity moved from movable to all entities so that they can move onto that cell
+	void UpdateOldMovementCell(FIntPoint CellInfo);
+
 	TArray<TArray<EDungeonGenerationType>> Get_Dungeon_Grid_Info();
 
 	TArray<TArray<bool>> NavigationGrid;
 
 	FOnGridReady OnGridReady;
+
+	FIntPoint CurrentPlayerCoords;
 
 	bool Can_Move_Forward(int StartX, int StartY, float CurrentYaw);
 	void Moving_Forward(int& StartX, int &StartY, float CurrentYaw);
