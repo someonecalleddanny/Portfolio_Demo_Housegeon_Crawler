@@ -12,8 +12,13 @@
 #include "Dungeon_Generation/GS_DungeonGeneration.h"
 #include "Dungeon_Generation/EDungeonGenerationType.h"
 
+#include "Components/TimelineComponent.h"
+#include "Curves/CurveFloat.h"
+
 #include "Camera/CameraComponent.h" 
 #include "Components/CapsuleComponent.h"
+
+#include "Camera/CameraShakeBase.h"
 
 #include "MC.generated.h"
 
@@ -36,6 +41,10 @@ public:
 
 	FORCEINLINE class UCameraComponent* GetCamera() const { return myCamera; }
 	FORCEINLINE UCapsuleComponent* GetMyCapsule() const { return myCapsule; }
+	FORCEINLINE UTimelineComponent* GetMyTimeline() const { return MovementTimeline; }
+	FORCEINLINE UTimelineComponent* GetMyRotate90Timeline() const { return Rotate90Timeline; }
+	FORCEINLINE UTimelineComponent* GetMyRotate180Timeline() const { return Rotate180Timeline; }
+	
 
 protected:
 	// Called when the game starts or when spawned
@@ -55,6 +64,62 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "C++ Grid Movement Logic")
 	bool bAbleToMove = true;
+
+	
+	//Camera Shakes
+
+	UPROPERTY(EditAnywhere, Category = "C++ Camera Shakes")
+	TSubclassOf<UCameraShakeBase> MoveForwardCameraShakeClass;
+
+	//Timeline Logic
+
+	UPROPERTY(EditAnywhere, Category = "Timeline")
+	UCurveFloat* MovementFloatCurve;
+
+	UPROPERTY(EditAnywhere, Category = "Timeline")
+	float MovementForwardPlayRate = 1.25f;
+
+	UPROPERTY(EditAnywhere, Category = "Timeline")
+	float Rotate90PlayRate = 1.5f;
+
+	UPROPERTY(EditAnywhere, Category = "Timeline")
+	float Rotate180PlayRate = 1.f;
+
+	UPROPERTY()
+	FOnTimelineFloat MovementInterp;
+
+	UPROPERTY()
+	FOnTimelineEvent MovementFinished;
+
+	UPROPERTY()
+	FOnTimelineFloat Rotate90Interp;
+
+	UPROPERTY()
+	FOnTimelineEvent Rotate90Finished;
+
+	UPROPERTY()
+	FOnTimelineFloat Rotate180Interp;
+
+	UPROPERTY()
+	FOnTimelineEvent Rotate180Finished;
+
+	UFUNCTION()
+	void OnMovementTimelineTick(float Alpha);
+
+	UFUNCTION()
+	void OnMovementTimelineFinished();
+
+	UFUNCTION()
+	void OnRotate90TimelineTick(float Alpha);
+
+	UFUNCTION()
+	void OnRotate90TimelineFinished();
+
+	UFUNCTION()
+	void OnRotate180TimelineTick(float Alpha);
+
+	UFUNCTION()
+	void OnRotate180TimelineFinished();
 
 	/*
 		Might be confusing why there are 3 different move forwards, but this is the one that actually moves forward.
@@ -114,4 +179,19 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Capsule, meta = (AllowPrivateAccess = "true"))
 	UCapsuleComponent* myCapsule;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
+	UTimelineComponent* MovementTimeline;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
+	UTimelineComponent* Rotate90Timeline;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
+	UTimelineComponent* Rotate180Timeline;
+
+	//Timeline Variables
+	FVector MoveForwardStartLocation;
+	FVector MoveForwardEndLocation;
+
+	FRotator TimelineStartRotation;
+	FRotator TimelineEndRotation;
 };

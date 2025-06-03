@@ -3,6 +3,7 @@
 
 #include "Entities/MC.h"
 #include "Interfaces/POI_Interaction.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -11,19 +12,28 @@ AMC::AMC()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	myCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("PlayerMan"));
-	myCapsule->SetupAttachment(RootComponent);
+	//myCapsule->SetupAttachment(RootComponent);
+
+	RootComponent = myCapsule;
 
 	myCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraView"));
 	myCamera->SetupAttachment(myCapsule);
 
 	myCamera->SetRelativeLocation(FVector(0.f, 0.f, Camera_Z));
 
+	MovementTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("MoveForwardTimelineComponent"));
+	Rotate90Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Rotate90TimelineComponent"));
+	Rotate180Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Rotate180TimelineComponent"));
 	Tags.Add("MC");
+
+	AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
 
 // Called when the game starts or when spawned
 void AMC::BeginPlay()
 {
+	Super::BeginPlay();
+
 	//Get my dungeon state
 	myDungeonState = GetWorld()->GetGameState<AGS_DungeonGeneration>();
 
@@ -48,7 +58,41 @@ void AMC::BeginPlay()
 		Subsystem->AddMappingContext(myMappingContext, 0);
 	}
 
-	Super::BeginPlay();
+	if (MovementTimeline && Rotate90Timeline && Rotate180Timeline)
+	{
+		//Add the move forward timeline logic, Called when W key is pressed
+		MovementInterp.BindUFunction(this, FName("OnMovementTimelineTick"));
+		MovementFinished.BindUFunction(this, FName("OnMovementTimelineFinished"));
+
+		MovementTimeline->AddInterpFloat(MovementFloatCurve, MovementInterp);
+		MovementTimeline->SetTimelineFinishedFunc(MovementFinished);
+
+		MovementTimeline->SetPlayRate(MovementForwardPlayRate);
+
+		//Add the Rotate90 timeline logic, Called when A/D key is pressed
+		Rotate90Interp.BindUFunction(this, FName("OnRotate90TimelineTick"));
+		Rotate90Finished.BindUFunction(this, FName("OnRotate90TimelineFinished"));
+
+		Rotate90Timeline->AddInterpFloat(MovementFloatCurve, Rotate90Interp);
+		Rotate90Timeline->SetTimelineFinishedFunc(Rotate90Finished);
+
+		Rotate90Timeline->SetPlayRate(Rotate90PlayRate);
+
+		//Do the same when Rotating 180 degrees when pressing S
+
+		Rotate180Interp.BindUFunction(this, FName("OnRotate180TimelineTick"));
+		Rotate180Finished.BindUFunction(this, FName("OnRotate180TimelineFinished"));
+
+		Rotate180Timeline->AddInterpFloat(MovementFloatCurve, Rotate180Interp);
+		Rotate180Timeline->SetTimelineFinishedFunc(Rotate180Finished);
+
+		Rotate180Timeline->SetPlayRate(Rotate180PlayRate);
+	}
+	else 
+	{
+		UE_LOG(LogTemp, Error, TEXT("Timelines Not Valid"));
+	}
+	
 }
 
 void AMC::Spawn_At_Center_Grid()
@@ -86,6 +130,47 @@ void AMC::Spawn_At_Center_Grid()
 	}
 }
 
+void AMC::OnMovementTimelineTick(float Alpha)
+{
+	FVector LerpLocation = FMath::Lerp(MoveForwardStartLocation, MoveForwardEndLocation, Alpha);
+
+	SetActorLocation(LerpLocation);
+}
+
+void AMC::OnMovementTimelineFinished()
+{
+	bAbleToMove = true;
+
+	if (bKeepWalkingForward) 
+	{
+		Manual_MoveForward();
+	}
+}
+
+void AMC::OnRotate90TimelineTick(float Alpha)
+{
+	FRotator LerpRotation = FMath::Lerp(TimelineStartRotation, TimelineEndRotation, Alpha);
+
+	SetActorRotation(LerpRotation);
+}
+
+void AMC::OnRotate90TimelineFinished()
+{
+	bAbleToMove = true;
+}
+
+void AMC::OnRotate180TimelineTick(float Alpha)
+{
+	FRotator LerpRotation = FMath::Lerp(TimelineStartRotation, TimelineEndRotation, Alpha);
+
+	SetActorRotation(LerpRotation);
+}
+
+void AMC::OnRotate180TimelineFinished()
+{
+	bAbleToMove = true;
+}
+
 void AMC::Manual_MoveForward()
 {
 	//Check if the forward cell (check rotation from normalised yaw, set when calling rotation functions),
@@ -106,7 +191,33 @@ void AMC::Manual_MoveForward()
 		FVector EndLocation = GetActorLocation() + (GetActorForwardVector() * 400.f);
 		EndLocation.Z = StartLocation.Z;
 
-		Call_Move_Forward(StartLocation, EndLocation);
+		//Call_Move_Forward(StartLocation, EndLocation);
+
+		//Set a camera shake towards the player when they move to create juice into the walking
+		UGameplayStatics::PlayWorldCameraShake(
+			GetWorld(),
+			MoveForwardCameraShakeClass,
+			GetActorLocation(),
+			800.f,
+			1000.f,
+			1.f
+		);
+
+		//Set the start/end lerp locations which will be used in the movementtimeline event
+		MoveForwardStartLocation = StartLocation;
+		MoveForwardEndLocation = EndLocation;
+
+		//Check if the Movement timeline component is valid. Sometimes Unreal has a bug where the component
+		//Does not init. If failed to init, I have to reload the BP child class to force update the component
+		if (MovementTimeline) 
+		{
+			MovementTimeline->PlayFromStart();
+		}
+		else 
+		{
+			UE_LOG(LogTemp, Error, TEXT("Timeline Not Valid"));
+		}
+		
 	}
 	else
 	{
@@ -116,7 +227,7 @@ void AMC::Manual_MoveForward()
 
 void AMC::MoveForward(const FInputActionValue& Value)
 {
-	//Used for BP timelines, once forward lerp is finished, if the move forward key is still pressed, it will call movement
+	//Used for timelines, once forward lerp is finished, if the move forward key is still pressed, it will call movement
 	//again, This does assume that the IA class has the OnPressed + OnReleased trigger
 	bKeepWalkingForward = Value.Get<bool>();
 
@@ -170,15 +281,11 @@ void AMC::RotateLeftRight(const FInputActionValue& Value)
 
 		//Rotate along the yaw to the left
 		Desired_Rotation.Yaw -= 90.f;
-		/*
-		I tried to make a timeline in CPP but it's just way tooooo much work when I just can make it in BP
-		*/
-		Call_Rotate_90(GetActorRotation(), Desired_Rotation);
-		bAbleToMove = false;
+		
+		//Old BP logic
+		//Call_Rotate_90(GetActorRotation(), Desired_Rotation);
 
 		//Rotate the normalised yaw left for the grid naviation system (Currently a temp solution will come back later)
-
-
 	}
 	else//Rotating 90 degrees right
 	{
@@ -196,12 +303,27 @@ void AMC::RotateLeftRight(const FInputActionValue& Value)
 		Desired_Rotation.Yaw += 90.f;
 
 		UE_LOG(LogTemp, Display, TEXT("Right ROTATING, current rotation = %f"), GetActorRotation().Yaw);
-		/*
-		I tried to make a timeline in CPP but it's just way tooooo much work when I just can make it in BP
-		*/
-		Call_Rotate_90(GetActorRotation(), Desired_Rotation);
-		bAbleToMove = false;
 	}
+
+	//Once finished with determining the new rotation from reading if going left right from A and D key inputs, do the
+	//C++ Timeline to rotate the player (I first did a BP timeline but now converted it into a C++ one)
+	bAbleToMove = false;
+
+	//Set the start and end lerp rotations which will be used in the rotate90 timeline event
+	TimelineStartRotation = GetActorRotation();
+	TimelineEndRotation = Desired_Rotation;
+
+	//Check if the timeline component is valid, Had an Unreal bug where the component was not initting which would cause
+	//Crashes, if happens again I can localise issue and know that I have to reload my bp child class
+	if (Rotate90Timeline)
+	{
+		Rotate90Timeline->PlayFromStart();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Rotate90 Timeline Not Valid"));
+	}
+
 }
 
 void AMC::Rotate180(const FInputActionValue& Value)
@@ -229,11 +351,26 @@ void AMC::Rotate180(const FInputActionValue& Value)
 		myGridTransform.NormalizedYaw -= 360.f;
 	}
 
-	/*
-		I tried to make a timeline in CPP but it's just way tooooo much work when I just can make it in BP
-	*/
-	Call_Rotate_180(GetActorRotation(), Desired_Rotation);
+	//Old Code when I had bp timeline logic
+	//Call_Rotate_180(GetActorRotation(), Desired_Rotation);
+
+	//Since an animation is going to start, I have to make able to move false so that no other inputs can intefere
 	bAbleToMove = false;
+
+	//Set the start and end lerp rotations which will be used in the 180 timeline event
+	TimelineStartRotation = GetActorRotation();
+	TimelineEndRotation = Desired_Rotation;
+
+	//Check if the timeline component is valid, Had an Unreal bug where the component was not initting which would cause
+	//Crashes, if happens again I can localise issue and know that I have to reload my bp child class
+	if (Rotate180Timeline)
+	{
+		Rotate180Timeline->PlayFromStart();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Rotate180 Timeline Not Valid"));
+	}
 }
 
 void AMC::Interacted(const FInputActionValue& Value)
