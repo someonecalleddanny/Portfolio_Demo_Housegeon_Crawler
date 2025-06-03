@@ -59,4 +59,7 @@ protected:
 private:
 	bool bCanDrag = false;
 	bool bKeyAlreadyDown = false;
+	bool bMouseWrapped = false;
+	float PreWrapDeltaX = 0.0f;
+	float PreWrapDeltaY = 0.0f;
 };
