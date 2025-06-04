@@ -55,8 +55,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "C++ Generation Logic")
 	int Spawn_Deadzone = 2;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "C++ Generation Logic")
-	TMap<int, FEnemySpawnData> EnemiesToSpawn;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Spawn Logic")
+	TArray<TSubclassOf<AEnemy>> Level1EnemiesToSpawn;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon POIs")
 	int Amount_Of_Dead_Ends = 4;
@@ -69,6 +69,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Options")
 	int CurrentLevel = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Options")
+	int AmountOfEnemiesToSpawn = 5;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon Options")
 	EPathTraversalType ChoiceOfTraversal;
@@ -144,7 +147,17 @@ private:
 	void GO_UP(int UnMovedX, int &ChangedY);
 	void GO_DOWN(int UnMovedX, int& ChangedY);
 
+	//(In The Header) every function below will deal with the AI systems by creating the navigation and spawning of enemies
 	void Dungeon_Logic_Finished();
+
+	void Spawn_Enemies(TArray<FIntPoint>  SpawnLocationsForEnemies);
+
+	/*
+		Retrieve the enemy arrays, I use individual Tarrays for each level because BP does not support nested containers
+		so this is a bandaid solution to give designers more freedom when moving around enemies to spawn for each level
+	*/
+	TArray<TSubclassOf<AEnemy>> Retrieve_Enemy_Array_From_Current_Level();
+
 
 	//Will hold all the end locations when making paths from a to b
 	TArray<FEnd_Location_Data> MyEndLocations;

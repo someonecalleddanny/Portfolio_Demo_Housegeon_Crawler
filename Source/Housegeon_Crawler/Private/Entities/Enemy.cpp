@@ -9,6 +9,21 @@ AEnemy::AEnemy()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	myCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("PlayerMan"));
+
+	RootComponent = myCapsule;
+
+	myCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	myCapsule->SetCapsuleHalfHeight(88.f);
+	myCapsule->SetCapsuleRadius(44.f);
+
+	EnemySkeleton = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MySkeleton"));
+	EnemySkeleton->SetupAttachment(RootComponent);
+
+	EnemySkeleton->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 // Called when the game starts or when spawned

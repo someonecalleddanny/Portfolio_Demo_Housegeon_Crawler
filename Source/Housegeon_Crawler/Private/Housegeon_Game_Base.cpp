@@ -1799,6 +1799,12 @@ void AHousegeon_Game_Base::Dungeon_Logic_Finished()
 
 	Temp_NavigationGrid.SetNum(Grid_X_Size);
 
+	//Forward declare the spawn locations for the enemies which will be set in the for loop below
+	TArray<FIntPoint> SpawnLocationsForEnemies;
+
+	//Forward declare a TempIntPoint which gets overwritten each time when there is a walkable area in the for loop below
+	FIntPoint TempIntPoint;
+
 	for (int x = 0; x < Grid_X_Size; x++) 
 	{
 		Temp_NavigationGrid[x].SetNum(Grid_Y_Size);
@@ -1811,6 +1817,19 @@ void AHousegeon_Game_Base::Dungeon_Logic_Finished()
 			Temp_NavigationGrid[x][y] =
 				(DungeonGridInfo[x][y] == EDungeonGenerationType::Floor)
 				|| (DungeonGridInfo[x][y] == EDungeonGenerationType::Spawn);
+
+			//I don't want the enemy to spawn within the spawn bounds of the player so I create a shield around the spawn
+			//by checking if the x and y is NOT within bounds of the spawn
+			if (!(x > (Grid_X_Size / 2) - Spawn_Deadzone - 1 && x < (Grid_X_Size / 2) + Spawn_Deadzone + 1
+				&& y > (Grid_Y_Size / 2) - Spawn_Deadzone - 1 && y < (Grid_Y_Size / 2) + Spawn_Deadzone + 1))
+			{
+				//Add the x and y to the tempintpoint (Remember that they are int 2dvectors!)
+				TempIntPoint.X = x;
+				TempIntPoint.Y = y;
+
+				//Then add it into the set which can be randomly selected when spawning the enemies later on
+				SpawnLocationsForEnemies.Add(TempIntPoint);
+			}
 		}
 	}
 
@@ -1824,5 +1843,70 @@ void AHousegeon_Game_Base::Dungeon_Logic_Finished()
 	else 
 	{
 		UE_LOG(LogTemp, Error, TEXT("NOT Found the dungeon generation game state!"));
+	}
+
+	Spawn_Enemies(SpawnLocationsForEnemies);
+}
+
+void AHousegeon_Game_Base::Spawn_Enemies(TArray<FIntPoint>  SpawnLocationsForEnemies)
+{
+	//If the SpawnLocations are empty, instantly return and stop all logic from below
+	if (SpawnLocationsForEnemies.IsEmpty()) return;
+
+	//Forward declare the variables to be used in the for loop below
+	FIntPoint TempIntPoint;
+	int RandIndex = 0;
+	TSubclassOf<AEnemy> EnemyClassToSpawn;
+	//Have the spawn transform, (The random spawn rotation will be handled within the AI controller or enemy as I need a
+	//Normalised Yaw value)
+	FTransform SpawnTransform;
+	FVector SpawnLocation;
+
+	//Get the spawn enemy array from the specific level that the game is on
+	TArray<TSubclassOf<AEnemy>> LevelSpecificEnemiesToSpawn = Retrieve_Enemy_Array_From_Current_Level();
+
+	//Do a for loop for the amount of enemies to spawn, this is from a global property
+	for (int i = 0; i < AmountOfEnemiesToSpawn; i++) 
+	{
+		//Randomally choose a spawn location for the enemy by retriving a random index from the Set array
+		RandIndex = FMath::RandRange(0, SpawnLocationsForEnemies.Num() - 1);
+
+		//Set the tempintpoint by retrieving it from the potential spawn location array
+		TempIntPoint = SpawnLocationsForEnemies[RandIndex];
+
+		//Then remove the spawn location from the array so no other enemy can spawn in the same location
+		SpawnLocationsForEnemies.RemoveAt(RandIndex);
+
+		//Now randomally choose which enemy to spawn in the location by picking a random index from the enemy spawn array
+		//(Reusing the RandIndex variable)
+		RandIndex = FMath::RandRange(0, LevelSpecificEnemiesToSpawn.Num() - 1);
+		EnemyClassToSpawn = LevelSpecificEnemiesToSpawn[RandIndex];
+
+		//Then I need to set the location to where the enemy would be in world location (Each cell = 400cm3, starting from
+		//0,0)
+		SpawnLocation.X = TempIntPoint.X * 400.f;
+		SpawnLocation.Y = TempIntPoint.Y * 400.f;
+		//The z location will be set within the enemy class as I expect them to have different heights, BUT will encase the
+		//400x400 x/y size
+		SpawnTransform.SetLocation(SpawnLocation);
+
+		//With everything being picked, now spawn the actor at the location
+		GetWorld()->SpawnActor<AEnemy>(EnemyClassToSpawn, SpawnTransform);
+	}
+}
+
+TArray<TSubclassOf<AEnemy>> AHousegeon_Game_Base::Retrieve_Enemy_Array_From_Current_Level()
+{
+	//Go through a switch case from the current level int property (Set from BP edit screen or by going from one level to
+	//another) to return the enemies to spawn for that level
+	switch (CurrentLevel) 
+	{
+	case 0:
+		return Level1EnemiesToSpawn;
+		break;
+
+	default:
+		return Level1EnemiesToSpawn;
+		break;
 	}
 }

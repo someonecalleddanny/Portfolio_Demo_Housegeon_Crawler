@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/CapsuleComponent.h"
+
 #include "Enemy.generated.h"
 
 UCLASS()
@@ -14,6 +18,9 @@ class HOUSEGEON_CRAWLER_API AEnemy : public APawn
 public:
 	// Sets default values for this pawn's properties
 	AEnemy();
+
+	FORCEINLINE USkeletalMeshComponent* GetMySkeleton() const { return EnemySkeleton; }
+	FORCEINLINE UCapsuleComponent* GetMyCapsule() const { return myCapsule; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -26,4 +33,10 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
+	USkeletalMeshComponent* EnemySkeleton;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Capsule, meta = (AllowPrivateAccess = "true"))
+	UCapsuleComponent* myCapsule;
 };
