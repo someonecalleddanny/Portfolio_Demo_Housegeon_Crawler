@@ -15,11 +15,10 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("EnemyAIController possessed: %s"), *InPawn->GetName());
 
-		//I found that starting generation in begin play caused glitches because the game state initted later than
-		//This actor, So I have a delegate within my dungeonstate that broadcasts once the 2d array is valid to be read
-		//from
-		//myDungeonState->OnGridReady.AddDynamic(this, &AEnemyAIController::SpawnedEnemy);
 		SpawnedEnemy();
+
+		//Do the delegate call later because the possession comes after the delegate is broadcasted within the GS
+		//myDungeonState->OnGridReady.AddDynamic(this, &AEnemyAIController::SpawnedEnemy);
 	}
 	else
 	{
