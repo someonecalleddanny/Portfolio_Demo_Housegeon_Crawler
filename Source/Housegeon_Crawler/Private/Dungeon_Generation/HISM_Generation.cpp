@@ -3,6 +3,7 @@
 
 #include "Dungeon_Generation/HISM_Generation.h"
 #include "Kismet/GameplayStatics.h"
+#include "Entities/Enemy.h"
 
 
 // Sets default values
@@ -49,19 +50,11 @@ void AHISM_Generation::Start_Generation()
 	//First destroy all individual Actors that were spawned
 	if (myDungeonState) 
 	{
-		TArray<AActor*> FoundActors;
-
-		//Get all of the actors that derive from APOI_Base_Class, The idea is that when the level is regenerated,
-		//...All of the previous POI actors will have to be detroyed and made a new
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APOI_Base_Class::StaticClass(), FoundActors);
-
-		for (AActor* Actor : FoundActors)
-		{
-			if (Actor)
-			{
-				Actor->Destroy();
-			}
-		}
+		//Delete all of the actor classes that aren't a HISM, pass in the C++ parent classes to delete all the BP children
+		//Deleting all POIs
+		Delete_Actors_For_Start_Generation(APOI_Base_Class::StaticClass());
+		//Deleting all Enemies in the level
+		Delete_Actors_For_Start_Generation(AEnemy::StaticClass());
 
 		//Deleting mesh instances is simpler, just clear the instances of the HISM stack
 		HISM_Walls->ClearInstances();
@@ -72,6 +65,24 @@ void AHISM_Generation::Start_Generation()
 
 		//Thinking of doing multiple dungeon gens in one session
 		//myDungeonState->OnGridReady.RemoveDynamic(this, &AHISM_Generation::Start_Generation);
+	}
+}
+
+void AHISM_Generation::Delete_Actors_For_Start_Generation(TSubclassOf<AActor> ActorClassToDestroy)
+{
+	TArray<AActor*> FoundActors;
+
+	//Get all of the actors that derive from the inputted actor class, The idea is that when the level is regenerated,
+	//...All of the previous  actors will have to be detroyed and made a new, It is also assumed that the parent is inputted
+	//Such as AEnemy to delete all possible children from AEnemy in the level
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ActorClassToDestroy, FoundActors);
+
+	for (AActor* Actor : FoundActors)
+	{
+		if (Actor)
+		{
+			Actor->Destroy();
+		}
 	}
 }
 

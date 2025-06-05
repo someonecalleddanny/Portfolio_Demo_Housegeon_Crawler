@@ -7,6 +7,7 @@
 
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SceneComponent.h"
 
 #include "Enemy.generated.h"
 
@@ -21,6 +22,7 @@ public:
 
 	FORCEINLINE USkeletalMeshComponent* GetMySkeleton() const { return EnemySkeleton; }
 	FORCEINLINE UCapsuleComponent* GetMyCapsule() const { return myCapsule; }
+	FORCEINLINE USceneComponent* GetMySceneComponent() const { return SceneComponent; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -39,4 +41,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Capsule, meta = (AllowPrivateAccess = "true"))
 	UCapsuleComponent* myCapsule;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
+	USceneComponent* SceneComponent;
 };

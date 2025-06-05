@@ -1818,10 +1818,9 @@ void AHousegeon_Game_Base::Dungeon_Logic_Finished()
 				(DungeonGridInfo[x][y] == EDungeonGenerationType::Floor)
 				|| (DungeonGridInfo[x][y] == EDungeonGenerationType::Spawn);
 
-			//I don't want the enemy to spawn within the spawn bounds of the player so I create a shield around the spawn
-			//by checking if the x and y is NOT within bounds of the spawn
-			if (!(x > (Grid_X_Size / 2) - Spawn_Deadzone - 1 && x < (Grid_X_Size / 2) + Spawn_Deadzone + 1
-				&& y > (Grid_Y_Size / 2) - Spawn_Deadzone - 1 && y < (Grid_Y_Size / 2) + Spawn_Deadzone + 1))
+			//Go through a boolean function to check if the enemy can spawn at the current cell, made into function because
+			//There are a few more checks to see if an enemy can spawn on a cell
+			if (Check_Area_Spawnable_For_Enemy(x, y))
 			{
 				//Add the x and y to the tempintpoint (Remember that they are int 2dvectors!)
 				TempIntPoint.X = x;
@@ -1846,6 +1845,27 @@ void AHousegeon_Game_Base::Dungeon_Logic_Finished()
 	}
 
 	Spawn_Enemies(SpawnLocationsForEnemies);
+}
+
+bool AHousegeon_Game_Base::Check_Area_Spawnable_For_Enemy(int XPos, int YPos)
+{
+	//First check if the enemy spawn location is within the spawn bounds (DO NOT WANT TO SPAWN NEXT TO THE PLAYER)
+	//...so return false
+	if (XPos > (Grid_X_Size / 2) - Spawn_Deadzone - 1 && XPos < (Grid_X_Size / 2) + Spawn_Deadzone + 1
+		&& YPos >(Grid_Y_Size / 2) - Spawn_Deadzone - 1 && YPos < (Grid_Y_Size / 2) + Spawn_Deadzone + 1) 
+	{
+		return false;
+	}
+
+	//I only want to spawn on walkable tiles which are only floors atm (Spawn tiles do not want to spawn btw eventhough
+	//...they are technically walkable). So, if not a floor, don't want to spawn at the cell
+	if (!(DungeonGridInfo[XPos][YPos] == EDungeonGenerationType::Floor)) 
+	{
+		return false;
+	}
+
+	//If after every check and here, return true because you can spawn on that cell
+	return true;
 }
 
 void AHousegeon_Game_Base::Spawn_Enemies(TArray<FIntPoint>  SpawnLocationsForEnemies)

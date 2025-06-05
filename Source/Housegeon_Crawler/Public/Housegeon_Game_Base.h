@@ -150,6 +150,8 @@ private:
 	//(In The Header) every function below will deal with the AI systems by creating the navigation and spawning of enemies
 	void Dungeon_Logic_Finished();
 
+	bool Check_Area_Spawnable_For_Enemy(int XPos, int YPos);
+
 	void Spawn_Enemies(TArray<FIntPoint>  SpawnLocationsForEnemies);
 
 	/*

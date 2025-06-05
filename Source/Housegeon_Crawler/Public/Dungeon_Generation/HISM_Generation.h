@@ -42,6 +42,8 @@ protected:
 	UFUNCTION()
 	void Start_Generation();
 
+	void Delete_Actors_For_Start_Generation(TSubclassOf<AActor> ActorClassToDestroy);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
