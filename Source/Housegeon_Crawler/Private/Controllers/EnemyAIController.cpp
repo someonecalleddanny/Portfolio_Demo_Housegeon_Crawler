@@ -5,16 +5,21 @@
 
 void AEnemyAIController::OnPossess(APawn* InPawn)
 {
+	Super::OnPossess(InPawn);
+
 	//Get my dungeon state
 	myDungeonState = GetWorld()->GetGameState<AGS_DungeonGeneration>();
 
 	//Check if valid and I was not stupid to add it to the game mode base
 	if (myDungeonState)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("EnemyAIController possessed: %s"), *InPawn->GetName());
+
 		//I found that starting generation in begin play caused glitches because the game state initted later than
 		//This actor, So I have a delegate within my dungeonstate that broadcasts once the 2d array is valid to be read
 		//from
-		myDungeonState->OnGridReady.AddDynamic(this, &AEnemyAIController::SpawnedEnemy);
+		//myDungeonState->OnGridReady.AddDynamic(this, &AEnemyAIController::SpawnedEnemy);
+		SpawnedEnemy();
 	}
 	else
 	{
@@ -24,7 +29,18 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 
 void AEnemyAIController::SpawnedEnemy()
 {
-	SetRandomRotation();
+	UE_LOG(LogTemp, Display, TEXT("Spawned An Enemy!"));
+
+	if (GetPawn()) 
+	{
+		UE_LOG(LogTemp, Display, TEXT("The enemy has indeed been possessed!"));
+		SetRandomRotation();
+	}
+	else 
+	{
+		UE_LOG(LogTemp, Error, TEXT("The enemy has NOT indeed been possessed!"));
+	}
+	
 }
 
 void AEnemyAIController::SetRandomRotation()
@@ -37,7 +53,7 @@ void AEnemyAIController::SetRandomRotation()
 	FRotator CustomRotationSpawn(0.0f, 0.0f, 0.0f);
 
 
-	int RandSpawn = FMath::RandRange(0, 0);
+	int RandSpawn = FMath::RandRange(0, 3);
 
 	switch (RandSpawn)
 	{
@@ -45,22 +61,27 @@ void AEnemyAIController::SetRandomRotation()
 		CustomRotationSpawn.Yaw = -90;
 		//Create a normalised rotation, (useful for when checking navigation grid), 0 means forward
 		NormalizedYaw = 0.f;
+		break;
 
 	case 1:
 		CustomRotationSpawn.Yaw = 0.0f;
 		//Create a normalised rotation, (useful for when checking navigation grid), 90 means right
 		NormalizedYaw = 90.f;
+		break;
 
 	case 2:
 		CustomRotationSpawn.Yaw = 90.0f;
 		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
 		NormalizedYaw = 180.f;
+		break;
 
 	case 3:
 		CustomRotationSpawn.Yaw = 180.0f;
 		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
 		NormalizedYaw = 270.f;
+		break;
 	}
 
 	GetPawn()->SetActorRotation(FQuat(CustomRotationSpawn));
+	//SetControlRotation(CustomRotationSpawn);
 }

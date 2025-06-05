@@ -479,21 +479,25 @@ void AMC::SetRandomSpawnRotation()
 		CustomRotationSpawn.Yaw = -90;
 		//Create a normalised rotation, (useful for when checking navigation grid), 0 means forward
 		myGridTransform.NormalizedYaw = 0.f;
+		break;
 
 	case 1:
 		CustomRotationSpawn.Yaw = 0.0f;
 		//Create a normalised rotation, (useful for when checking navigation grid), 90 means right
 		myGridTransform.NormalizedYaw = 90.f;
+		break;
 
 	case 2:
 		CustomRotationSpawn.Yaw = 90.0f;
 		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
 		myGridTransform.NormalizedYaw = 180.f;
+		break;
 
 	case 3:
 		CustomRotationSpawn.Yaw = 180.0f;
 		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
 		myGridTransform.NormalizedYaw = 270.f;
+		break;
 	}
 
 	SetActorRotation(FQuat(CustomRotationSpawn));
