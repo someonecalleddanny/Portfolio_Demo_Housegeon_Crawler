@@ -128,6 +128,9 @@ void AMC::Spawn_At_Center_Grid()
 
 			OldCell.X = DungeonGridInfo.Num() / 2;
 			OldCell.Y = DungeonGridInfo[0].Num() / 2;
+
+			//Make the spawned cell not movable for any other entity as well as update the global coords of the player
+			myDungeonState->SetPlayerSpawnInformation(OldCell);
 		}
 		
 	}

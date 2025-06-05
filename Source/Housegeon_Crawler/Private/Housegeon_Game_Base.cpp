@@ -1836,8 +1836,7 @@ void AHousegeon_Game_Base::Dungeon_Logic_Finished()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Found the dungeon generation game state!"));
 
-		DungeonGameState->Set_Dungeon_Grid_Info(DungeonGridInfo);
-		DungeonGameState->NavigationGrid = Temp_NavigationGrid;
+		DungeonGameState->Set_Dungeon_Grid_Info(DungeonGridInfo, Temp_NavigationGrid);
 	}
 	else 
 	{

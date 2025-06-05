@@ -3,19 +3,47 @@
 
 
 
-void AGS_DungeonGeneration::Set_Dungeon_Grid_Info(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_Param)
+void AGS_DungeonGeneration::Set_Dungeon_Grid_Info(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_Param, TArray<TArray<bool>> NavigationGrid_Param)
 {
 	DungeonGridInfo = DungeonGridInfo_Param;
+    NavigationGrid = NavigationGrid_Param;
 
+    //First check if the dungeon grid info is valid on the x axis, Important because a large part of gameplay relies on this
 	if (DungeonGridInfo.IsValidIndex(0)) 
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Dungeon Grid ready to be broadcasted for generation!"));
-		OnGridReady.Broadcast();
+        //If the Y axis of the grid is not valid, then instantly return
+        if (!(DungeonGridInfo[0].IsValidIndex(0)))
+        {
+            UE_LOG(LogTemp, Error, TEXT("Dungeon Grid Y is invalid check Set_Dungeon_Grid_Info function!"));
+            return;
+        }
+		
 	}
-	else 
+	else //If not true, instantly return and mark where the error was
 	{
-		UE_LOG(LogTemp, Error, TEXT("Dungeon Grid Not ready to be broadcasted for generation cause invalid array!"));
+        UE_LOG(LogTemp, Error, TEXT("Dungeon Grid X is invalid check Set_Dungeon_Grid_Info function!"));
+        return;
 	}
+
+    //First check if the NavigationGrid info is valid on the x axis, Important because a large part of gameplay relies on this
+    if (NavigationGrid.IsValidIndex(0))
+    {
+        //If the Y axis of the grid is not valid, then instantly return
+        if (!(NavigationGrid[0].IsValidIndex(0)))
+        {
+            UE_LOG(LogTemp, Error, TEXT("Navigation Grid Y is invalid check Set_Dungeon_Grid_Info function!"));
+            return;
+        }
+
+    }
+    else //If not true, instantly return and mark where the error was
+    {
+        UE_LOG(LogTemp, Error, TEXT("Navigation Grid X is invalid check Set_Dungeon_Grid_Info function!"));
+        return;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("Dungeon/Navigation Grid ready to be broadcasted for generation!"));
+    OnGridReady.Broadcast();
 }
 
 void AGS_DungeonGeneration::SetPlayerSpawnInformation(FIntPoint PlayerCellInfo)
@@ -24,6 +52,8 @@ void AGS_DungeonGeneration::SetPlayerSpawnInformation(FIntPoint PlayerCellInfo)
     if (!(NavigationGrid.IsValidIndex(PlayerCellInfo.X))) 
     {
         UE_LOG(LogTemp, Error, TEXT("The X Spawn Cells where not in range for the navigation grid"));
+        UE_LOG(LogTemp, Error, TEXT("The X Input = %d"), PlayerCellInfo.X);
+        UE_LOG(LogTemp, Error, TEXT("Current Navigation Grid Size = %d"), NavigationGrid.Num());
         return;
     }
     else if (!(NavigationGrid[PlayerCellInfo.X].IsValidIndex(PlayerCellInfo.Y))) 

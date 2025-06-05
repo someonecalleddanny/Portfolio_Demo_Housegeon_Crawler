@@ -27,7 +27,7 @@ struct NormalizedGridTransform
 {
 	int X = 0;
 	int Y = 0;
-	float NormalizedYaw = 0;
+	float NormalizedYaw = 0.f;
 };
 
 UCLASS()

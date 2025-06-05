@@ -22,8 +22,9 @@ class HOUSEGEON_CRAWLER_API AGS_DungeonGeneration : public AGameStateBase
 {
 	GENERATED_BODY()
 public:
-	void Set_Dungeon_Grid_Info(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_Param);
+	void Set_Dungeon_Grid_Info(TArray<TArray<EDungeonGenerationType>> DungeonGridInfo_Param, TArray<TArray<bool>> NavigationGrid_Param);
 
+	//This function updates the global player coords (Used for AI) as well as setting the cell as not movable onto
 	void SetPlayerSpawnInformation(FIntPoint PlayerCellInfo);
 
 	//Make the cell that the entity moved from movable to all entities so that they can move onto that cell
