@@ -7,7 +7,7 @@
 AEnemy::AEnemy()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	//I create a scene component so that the capsule component can have a relative offset so the pivot point can be at
 	//0 on the z, Don't care about losing gravity as this game will never simulate physics
