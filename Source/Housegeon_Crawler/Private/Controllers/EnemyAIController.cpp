@@ -84,3 +84,87 @@ void AEnemyAIController::SetRandomRotation()
 	GetPawn()->SetActorRotation(FQuat(CustomRotationSpawn));
 	//SetControlRotation(CustomRotationSpawn);
 }
+
+void AEnemyAIController::Start_AI()
+{
+	//Default to the check player AI state when starting or restarting the AI, Don't need timer as I want to be fast to do
+	//Event
+	MyCurrentAIState = ECurrent_AI_State::CheckPlayer;
+	Check_MC();
+}
+
+void AEnemyAIController::AI_Next_State(float Delay)
+{
+	//If the coder accidently or intentionaly wants a default time until the next AI state happens, set the delay to not be
+	//Instant (Stops stack overflow)
+	if (Delay <= 0.f) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AI Next state had a delay of <= 0.f"));
+		Delay = 0.01f;
+	}
+
+	//Then call the timer manager to have a delay until doing the next function from the current AI state selected
+	GetWorldTimerManager().SetTimer(TH_NextAIEvent, this, &AEnemyAIController::TimerEvent_DO_State_Function, Delay, false);
+}
+
+void AEnemyAIController::TimerEvent_DO_State_Function()
+{
+	/*
+		Here I create a pointer void function that is found from the myAIStates map. The key/identifiers
+		are enums that link to void pointers for this class instance. This is basically my version of creating
+		a blackboard key when you create a behaviour tree.
+	*/
+	void (AEnemyAIController:: * AI_State_Call)() = myAIStates.FindRef(MyCurrentAIState);
+
+	//Check if the void pointer is valid
+	if (AI_State_Call)
+	{
+		/*
+			Here I call the void pointer. First I have to encase this->*AI_State_Call due to order of operation.
+			But basically I get the current actor reference and then access the current function pointer which
+			was made above
+		*/
+		(this->*AI_State_Call)();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("NOOOT Found The AI State to Play for Enemy"));
+	}
+}
+
+void AEnemyAIController::Check_MC()
+{
+	bool bFoundPlayer = false;
+
+	if (bFoundPlayer) 
+	{
+		/*
+			Will need to have a checker to check where the player is but for now just do patrolling AI behaviour
+		*/
+	}
+	else 
+	{
+		MyCurrentAIState = ECurrent_AI_State::RandomPatrolMovementSelector;
+	}
+	
+	AI_Next_State(0.1f);
+}
+
+void AEnemyAIController::Choose_Random_Patrol()
+{
+	int RandomInt = FMath::RandRange(0, 3);
+	//Debugging
+	RandomInt = 0;
+
+	switch (RandomInt) 
+	{
+	case 0 :
+		MyCurrentAIState = ECurrent_AI_State::MoveForward;
+		break;
+	default:
+		break;
+	}
+
+	//Choose next state, this function has a default delay of 0.01f if lazy to specifiy a quick next state
+	AI_Next_State();
+}
