@@ -37,6 +37,9 @@ protected:
 	UPROPERTY()
 	AGS_DungeonGeneration* myDungeonState;
 
+	UPROPERTY()
+	APawn* ControlledPawn;
+
 	virtual void OnPossess(APawn* InPawn) override;
 
 	UFUNCTION()
@@ -52,7 +55,8 @@ private:
 	TMap<ECurrent_AI_State, void (AEnemyAIController::*)()> myAIStates =
 	{
 		{ECurrent_AI_State::CheckPlayer, &AEnemyAIController::Check_MC},
-		{ECurrent_AI_State::RandomPatrolMovementSelector, &AEnemyAIController::Choose_Random_Patrol}
+		{ECurrent_AI_State::RandomPatrolMovementSelector, &AEnemyAIController::Choose_Random_Patrol},
+		{ECurrent_AI_State::MoveForward, &AEnemyAIController::Move_Forward}
 	};
 
 
@@ -74,4 +78,6 @@ private:
 	void Check_MC();
 
 	void Choose_Random_Patrol();
+
+	void Move_Forward();
 };

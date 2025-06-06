@@ -7,6 +7,8 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
+	ControlledPawn = InPawn;
+
 	//Get my dungeon state
 	myDungeonState = GetWorld()->GetGameState<AGS_DungeonGeneration>();
 
@@ -16,6 +18,7 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 		UE_LOG(LogTemp, Warning, TEXT("EnemyAIController possessed: %s"), *InPawn->GetName());
 
 		SpawnedEnemy();
+		//Start_AI();
 
 		//Do the delegate call later because the possession comes after the delegate is broadcasted within the GS
 		//myDungeonState->OnGridReady.AddDynamic(this, &AEnemyAIController::SpawnedEnemy);
@@ -30,10 +33,12 @@ void AEnemyAIController::SpawnedEnemy()
 {
 	UE_LOG(LogTemp, Display, TEXT("Spawned An Enemy!"));
 
-	if (GetPawn()) 
+	if (ControlledPawn)
 	{
 		UE_LOG(LogTemp, Display, TEXT("The enemy has indeed been possessed!"));
 		SetRandomRotation();
+
+		Start_AI();
 	}
 	else 
 	{
@@ -100,7 +105,7 @@ void AEnemyAIController::AI_Next_State(float Delay)
 	if (Delay <= 0.f) 
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AI Next state had a delay of <= 0.f"));
-		Delay = 0.01f;
+		Delay = 0.1f;
 	}
 
 	//Then call the timer manager to have a delay until doing the next function from the current AI state selected
@@ -152,6 +157,7 @@ void AEnemyAIController::Check_MC()
 
 void AEnemyAIController::Choose_Random_Patrol()
 {
+	UE_LOG(LogTemp, Display, TEXT("Choosing Random Patrol"));
 	int RandomInt = FMath::RandRange(0, 3);
 	//Debugging
 	RandomInt = 0;
@@ -162,9 +168,26 @@ void AEnemyAIController::Choose_Random_Patrol()
 		MyCurrentAIState = ECurrent_AI_State::MoveForward;
 		break;
 	default:
+		MyCurrentAIState = ECurrent_AI_State::MoveForward;
 		break;
 	}
 
 	//Choose next state, this function has a default delay of 0.01f if lazy to specifiy a quick next state
 	AI_Next_State();
+}
+
+void AEnemyAIController::Move_Forward()
+{
+	if (ControlledPawn) 
+	{
+		UE_LOG(LogTemp, Display, TEXT("AI found controlled pawn"));
+	}
+	else 
+	{
+		UE_LOG(LogTemp, Error, TEXT("AI NOT found controlled pawn"));
+	}
+
+	MyCurrentAIState = ECurrent_AI_State::CheckPlayer;
+
+	AI_Next_State(1.f);
 }
