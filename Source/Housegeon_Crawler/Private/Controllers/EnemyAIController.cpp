@@ -19,6 +19,7 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 
 		SpawnedEnemy();
 		//Start_AI();
+		//SetRandomRotation();
 
 		//Do the delegate call later because the possession comes after the delegate is broadcasted within the GS
 		//myDungeonState->OnGridReady.AddDynamic(this, &AEnemyAIController::SpawnedEnemy);
@@ -86,7 +87,7 @@ void AEnemyAIController::SetRandomRotation()
 		break;
 	}
 
-	GetPawn()->SetActorRotation(FQuat(CustomRotationSpawn));
+	ControlledPawn->SetActorRotation(FQuat(CustomRotationSpawn));
 	//SetControlRotation(CustomRotationSpawn);
 }
 
@@ -152,7 +153,7 @@ void AEnemyAIController::Check_MC()
 		MyCurrentAIState = ECurrent_AI_State::RandomPatrolMovementSelector;
 	}
 	
-	AI_Next_State(0.1f);
+	AI_Next_State(0.2f);
 }
 
 void AEnemyAIController::Choose_Random_Patrol()
