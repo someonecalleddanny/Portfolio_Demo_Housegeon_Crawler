@@ -68,6 +68,14 @@ void AGS_DungeonGeneration::SetPlayerSpawnInformation(FIntPoint PlayerCellInfo)
     NavigationGrid[CurrentPlayerCoords.X][CurrentPlayerCoords.Y] = false;
 }
 
+void AGS_DungeonGeneration::Set_AI_Manager(AAI_Manager* AIManager_PARAM)
+{
+    if (AIManager_PARAM) 
+    {
+        myAIManager = AIManager_PARAM;
+    }
+}
+
 void AGS_DungeonGeneration::UpdateOldMovementCell(FIntPoint CellInfo)
 {
     //First check if the inputted cell info is within bounds to avoid crashing

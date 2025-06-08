@@ -9,6 +9,8 @@
 
 #include "Math/IntPoint.h"
 
+#include "Managers/AI_Manager.h"
+
 #include "GS_DungeonGeneration.generated.h"
 
 
@@ -26,6 +28,8 @@ public:
 
 	//This function updates the global player coords (Used for AI) as well as setting the cell as not movable onto
 	void SetPlayerSpawnInformation(FIntPoint PlayerCellInfo);
+
+	void Set_AI_Manager(AAI_Manager* AIManager_PARAM);
 
 	//Make the cell that the entity moved from movable to all entities so that they can move onto that cell
 	void UpdateOldMovementCell(FIntPoint CellInfo);
@@ -46,6 +50,8 @@ public:
 private:
 
 	FIntPoint CurrentPlayerCoords;
+
+	AAI_Manager* myAIManager;
 
 	//The 2d array that holds all of the spawn logic when it has to be displayed by HISMs later
 	TArray<TArray<EDungeonGenerationType>> DungeonGridInfo;

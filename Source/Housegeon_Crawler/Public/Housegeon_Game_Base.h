@@ -160,6 +160,8 @@ private:
 	*/
 	TArray<TSubclassOf<AEnemy>> Retrieve_Enemy_Array_From_Current_Level();
 
+	void Spawn_AI_Manager();
+
 
 	//Will hold all the end locations when making paths from a to b
 	TArray<FEnd_Location_Data> MyEndLocations;

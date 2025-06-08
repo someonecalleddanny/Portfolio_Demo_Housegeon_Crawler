@@ -4,6 +4,7 @@
 #include "Housegeon_Game_Base.h"
 
 #include "Dungeon_Generation/GS_DungeonGeneration.h"
+#include "Managers/AI_Manager.h"
 
 void AHousegeon_Game_Base::StartPlay()
 {
@@ -1832,18 +1833,27 @@ void AHousegeon_Game_Base::Dungeon_Logic_Finished()
 		}
 	}
 
+	//Need to check that the GS is valid as it is the most important class for the functions below
 	if (DungeonGameState) 
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Found the dungeon generation game state!"));
 
 		DungeonGameState->Set_Dungeon_Grid_Info(DungeonGridInfo, Temp_NavigationGrid);
+
+		//Spawn the enemies randomly around the walkable areas of the dungeon
+		Spawn_Enemies(SpawnLocationsForEnemies);
+
+		//Then Spawn the AI manager class which handles the batching for enemies and pass it to the GS
+		FTransform TempTransform;
+		AAI_Manager* ManagerToMoveToGS = GetWorld()->SpawnActor<AAI_Manager>(AAI_Manager::StaticClass(), TempTransform);
+
+		DungeonGameState->Set_AI_Manager(ManagerToMoveToGS);
 	}
 	else 
 	{
 		UE_LOG(LogTemp, Error, TEXT("NOT Found the dungeon generation game state!"));
 	}
-
-	Spawn_Enemies(SpawnLocationsForEnemies);
+	
 }
 
 bool AHousegeon_Game_Base::Check_Area_Spawnable_For_Enemy(int XPos, int YPos)
@@ -1928,4 +1938,9 @@ TArray<TSubclassOf<AEnemy>> AHousegeon_Game_Base::Retrieve_Enemy_Array_From_Curr
 		return Level1EnemiesToSpawn;
 		break;
 	}
+}
+
+void AHousegeon_Game_Base::Spawn_AI_Manager()
+{
+	
 }
