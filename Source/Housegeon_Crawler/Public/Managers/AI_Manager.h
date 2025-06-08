@@ -15,12 +15,25 @@ public:
 	// Sets default values for this actor's properties
 	AAI_Manager();
 
+	void Set_Max_Entity_Count(int Amount);
+
+	void Add_Pursue_Function_To_Batch(AController* AIControllerToBatch);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+
+	//A circular queue container that will batch all the pursue events that AI controllers pass through
+	UPROPERTY()
+	TArray<AController*> PursueEventBatchQueueContainer;
+	int PursueHead = 0;
+	int PursueTail = 0;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+private:
+	int Max_Batchable_Entities_In_World = 0;
 };
