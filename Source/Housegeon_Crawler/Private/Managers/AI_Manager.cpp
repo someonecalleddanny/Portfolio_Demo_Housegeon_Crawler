@@ -16,9 +16,9 @@ void AAI_Manager::Set_Max_Entity_Count(int Amount)
 	//Set the max amount of entities that the queue batchers will hold, The idea is that the queue systems are static in
 	//size when the dungeon is generated, for now I'll only have a set amount of enemies that are spawned at the start
 	//No new ones will be spawned but I'll have to increase the max entity amount at start of generation
-	Max_Batchable_Entities_In_World = Amount;
+	MaxBatchableEntitiesInWorld = Amount;
 
-	PursueEventBatchQueueContainer.SetNum(Max_Batchable_Entities_In_World);
+	PursueEventBatchQueueContainer.SetNum(MaxBatchableEntitiesInWorld);
 }
 
 void AAI_Manager::Add_Pursue_Function_To_Batch(AController* AIControllerToBatch)
@@ -50,6 +50,12 @@ void AAI_Manager::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	GetWorld()->GetTimerManager().SetTimer(TH_PursueBatcher, this, &AAI_Manager::Timer_Batch_Pursue_Events, 1.f, true);
+}
+
+void AAI_Manager::Timer_Batch_Pursue_Events()
+{
+	UE_LOG(LogTemp, Display, TEXT("Batching pursue events"));
 }
 
 // Called every frame

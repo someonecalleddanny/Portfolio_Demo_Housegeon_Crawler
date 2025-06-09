@@ -17,7 +17,7 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("EnemyAIController possessed: %s"), *InPawn->GetName());
 
-		SpawnedEnemy();
+		//SpawnedEnemy();
 		//Start_AI();
 		//SetRandomRotation();
 

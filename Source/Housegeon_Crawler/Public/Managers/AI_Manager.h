@@ -23,6 +23,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UFUNCTION()
+	void Timer_Batch_Pursue_Events();
 
 	//A circular queue container that will batch all the pursue events that AI controllers pass through
 	UPROPERTY()
@@ -35,5 +37,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	int Max_Batchable_Entities_In_World = 0;
+	FTimerHandle TH_PursueBatcher;
+	int MaxBatchableEntitiesInWorld = 0;
 };
