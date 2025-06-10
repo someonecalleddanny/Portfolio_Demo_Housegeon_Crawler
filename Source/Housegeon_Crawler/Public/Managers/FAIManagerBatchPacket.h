@@ -29,5 +29,5 @@ struct FAIManagerBatchPacket
 
 	// Function to call when finished (bind this from my AIController), Use this because I cannot include the ai controller
 	//as a header within my ai manager as a circular dependency will happen as the GS owns the ai manager and the 
-	TFunction<void()> OnFinished;
+	TFunction<void()> FunctionWrapperOnFinished;
 };

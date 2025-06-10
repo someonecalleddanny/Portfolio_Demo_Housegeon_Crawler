@@ -3,11 +3,24 @@
 
 #include "Controllers/EnemyAIController.h"
 
+#include "Managers/FAIManagerBatchPacket.h"
+
 void AEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
 	ControlledPawn = InPawn;
+
+	//If can't find the controlled pawn then stop the ai from doing anything as I need to control the pawn
+	if (ControlledPawn)
+	{
+		UE_LOG(LogTemp, Display, TEXT("AI found controlled pawn"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("AI NOT found controlled pawn"));
+		return;
+	}
 
 	//Get my dungeon state
 	myDungeonState = GetWorld()->GetGameState<AGS_DungeonGeneration>();
@@ -93,67 +106,8 @@ void AEnemyAIController::SetRandomRotation()
 
 void AEnemyAIController::Start_AI()
 {
-	//Default to the check player AI state when starting or restarting the AI, Don't need timer as I want to be fast to do
-	//Event
-	MyCurrentAIState = ECurrent_AI_State::CheckPlayer;
-	Check_MC();
-}
-
-void AEnemyAIController::AI_Next_State(float Delay)
-{
-	//If the coder accidently or intentionaly wants a default time until the next AI state happens, set the delay to not be
-	//Instant (Stops stack overflow)
-	if (Delay <= 0.f) 
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AI Next state had a delay of <= 0.f"));
-		Delay = 0.1f;
-	}
-
-	//Then call the timer manager to have a delay until doing the next function from the current AI state selected
-	GetWorldTimerManager().SetTimer(TH_NextAIEvent, this, &AEnemyAIController::TimerEvent_DO_State_Function, Delay, false);
-}
-
-void AEnemyAIController::TimerEvent_DO_State_Function()
-{
-	/*
-		Here I create a pointer void function that is found from the myAIStates map. The key/identifiers
-		are enums that link to void pointers for this class instance. This is basically my version of creating
-		a blackboard key when you create a behaviour tree.
-	*/
-	void (AEnemyAIController:: * AI_State_Call)() = myAIStates.FindRef(MyCurrentAIState);
-
-	//Check if the void pointer is valid
-	if (AI_State_Call)
-	{
-		/*
-			Here I call the void pointer. First I have to encase this->*AI_State_Call due to order of operation.
-			But basically I get the current actor reference and then access the current function pointer which
-			was made above
-		*/
-		(this->*AI_State_Call)();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("NOOOT Found The AI State to Play for Enemy"));
-	}
-}
-
-void AEnemyAIController::Check_MC()
-{
-	bool bFoundPlayer = false;
-
-	if (bFoundPlayer) 
-	{
-		/*
-			Will need to have a checker to check where the player is but for now just do patrolling AI behaviour
-		*/
-	}
-	else 
-	{
-		MyCurrentAIState = ECurrent_AI_State::RandomPatrolMovementSelector;
-	}
-	
-	AI_Next_State(0.2f);
+	//Check_MC();
+	Choose_Random_Patrol();
 }
 
 void AEnemyAIController::Choose_Random_Patrol()
@@ -167,28 +121,26 @@ void AEnemyAIController::Choose_Random_Patrol()
 	{
 	case 0 :
 		MyCurrentAIState = ECurrent_AI_State::MoveForward;
+		Move_Forward();
 		break;
 	default:
 		MyCurrentAIState = ECurrent_AI_State::MoveForward;
+		Move_Forward();
 		break;
 	}
-
-	//Choose next state, this function has a default delay of 0.01f if lazy to specifiy a quick next state
-	//AI_Next_State();
 }
 
 void AEnemyAIController::Move_Forward()
 {
-	if (ControlledPawn) 
-	{
-		UE_LOG(LogTemp, Display, TEXT("AI found controlled pawn"));
-	}
-	else 
-	{
-		UE_LOG(LogTemp, Error, TEXT("AI NOT found controlled pawn"));
-	}
+	FAIManagerBatchPacket BatchPacketToSend;
+	BatchPacketToSend.FunctionWrapperOnFinished = [this]()
+		{
+			OnFinished();
+		};
+}
 
-	MyCurrentAIState = ECurrent_AI_State::CheckPlayer;
-
-	AI_Next_State(1.f);
+void AEnemyAIController::OnFinished()
+{
+	UE_LOG(LogTemp, Display, TEXT("Finished event"));
+	Start_AI();
 }
