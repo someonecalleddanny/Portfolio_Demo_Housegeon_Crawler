@@ -7,7 +7,7 @@
 AAI_Manager::AAI_Manager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 }
 
@@ -21,7 +21,7 @@ void AAI_Manager::Set_Max_Entity_Count(int Amount)
 	PursueEventBatchQueueContainer.SetNum(MaxBatchableEntitiesInWorld);
 }
 
-void AAI_Manager::Add_Pursue_Function_To_Batch(AController* AIControllerToBatch)
+void AAI_Manager::Add_Patrol_Function_To_Batch(AController* AIControllerToBatch)
 {
 	//Check if the inputted AI controller is valid
 	if (!(AIControllerToBatch)) 
@@ -50,12 +50,15 @@ void AAI_Manager::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	GetWorld()->GetTimerManager().SetTimer(TH_PursueBatcher, this, &AAI_Manager::Timer_Batch_Pursue_Events, 1.f, true);
-}
+	//GetWorld()->GetTimerManager().SetTimer(TH_PursueBatcher, this, &AAI_Manager::Timer_Batch_Pursue_Events, 1.f, true);
+	Test.SetNum(100);
 
-void AAI_Manager::Timer_Batch_Pursue_Events()
-{
-	UE_LOG(LogTemp, Display, TEXT("Batching pursue events"));
+	for (int i = 0; i < Test.Num(); i++) 
+	{
+		Test[i] = i;
+	}
+
+	bTestInitted = true;
 }
 
 // Called every frame
@@ -63,5 +66,21 @@ void AAI_Manager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	//UE_LOG(LogTemp, Display, TEXT("Testing AI manager tick!"));
+
+	if (bTestInitted) 
+	{
+		int tempint = 0;
+		for (int i = 0; i < Test.Num(); i++)
+		{
+			tempint = i;
+			
+			//UE_LOG(LogTemp, Display, TEXT("Number = %d!"), tempint);
+		}
+	}
+	else 
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Waiting to Test AI manager tick!"));
+	}
 }
 

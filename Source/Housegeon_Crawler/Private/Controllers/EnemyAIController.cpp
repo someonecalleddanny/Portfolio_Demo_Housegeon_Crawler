@@ -174,7 +174,7 @@ void AEnemyAIController::Choose_Random_Patrol()
 	}
 
 	//Choose next state, this function has a default delay of 0.01f if lazy to specifiy a quick next state
-	AI_Next_State();
+	//AI_Next_State();
 }
 
 void AEnemyAIController::Move_Forward()

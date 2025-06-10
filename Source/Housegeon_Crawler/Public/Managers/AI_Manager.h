@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+
 #include "AI_Manager.generated.h"
 
 UCLASS()
@@ -17,14 +18,11 @@ public:
 
 	void Set_Max_Entity_Count(int Amount);
 
-	void Add_Pursue_Function_To_Batch(AController* AIControllerToBatch);
+	void Add_Patrol_Function_To_Batch(AController* AIControllerToBatch);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	UFUNCTION()
-	void Timer_Batch_Pursue_Events();
 
 	//A circular queue container that will batch all the pursue events that AI controllers pass through
 	UPROPERTY()
@@ -39,4 +37,7 @@ public:
 private:
 	FTimerHandle TH_PursueBatcher;
 	int MaxBatchableEntitiesInWorld = 0;
+
+	TArray<int>Test;
+	bool bTestInitted = false;
 };
