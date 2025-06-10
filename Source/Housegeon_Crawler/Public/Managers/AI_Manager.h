@@ -40,4 +40,5 @@ private:
 
 	TArray<int>Test;
 	bool bTestInitted = false;
+	bool bDebugOnce = false;
 };

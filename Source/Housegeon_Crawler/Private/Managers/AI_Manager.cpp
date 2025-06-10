@@ -51,7 +51,7 @@ void AAI_Manager::BeginPlay()
 	Super::BeginPlay();
 	
 	//GetWorld()->GetTimerManager().SetTimer(TH_PursueBatcher, this, &AAI_Manager::Timer_Batch_Pursue_Events, 1.f, true);
-	Test.SetNum(100);
+	Test.SetNum(500);
 
 	for (int i = 0; i < Test.Num(); i++) 
 	{
@@ -66,7 +66,11 @@ void AAI_Manager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//UE_LOG(LogTemp, Display, TEXT("Testing AI manager tick!"));
+	if (!bDebugOnce) 
+	{
+		UE_LOG(LogTemp, Display, TEXT("Testing AI manager tick!"));
+		bDebugOnce = true;
+	}
 
 	if (bTestInitted) 
 	{
