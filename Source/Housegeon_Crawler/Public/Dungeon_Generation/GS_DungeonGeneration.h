@@ -31,6 +31,8 @@ public:
 
 	void Set_AI_Manager(AAI_Manager* AIManager_PARAM);
 
+	void Notify_AI_Manager_Patrol_Batch(FAIManagerBatchPacket BatchPacketToSend);
+
 	//Make the cell that the entity moved from movable to all entities so that they can move onto that cell
 	void UpdateOldMovementCell(FIntPoint CellInfo);
 

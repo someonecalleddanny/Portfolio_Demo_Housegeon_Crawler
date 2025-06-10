@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
+#include "Managers/FAIManagerBatchPacket.h"
+
 #include "AI_Manager.generated.h"
 
 UCLASS()
@@ -18,7 +20,7 @@ public:
 
 	void Set_Max_Entity_Count(int Amount);
 
-	void Add_Patrol_Function_To_Batch(AController* AIControllerToBatch);
+	void Add_Patrol_Function_To_Batch(FAIManagerBatchPacket AIBatchPacket);
 
 protected:
 	// Called when the game starts or when spawned
@@ -26,19 +28,20 @@ protected:
 
 	//A circular queue container that will batch all the pursue events that AI controllers pass through
 	UPROPERTY()
-	TArray<AController*> PursueEventBatchQueueContainer;
-	int PursueHead = 0;
-	int PursueTail = 0;
+	TArray<FAIManagerBatchPacket> QueuePatrolBatcher;
+	int PatrolHead = 0;
+	int PatrolTail = 0;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	FTimerHandle TH_PursueBatcher;
 	int MaxBatchableEntitiesInWorld = 0;
 
-	TArray<int>Test;
-	bool bTestInitted = false;
-	bool bDebugOnce = false;
+	int MaxAIToBatchInTick = 5;
+	//Have an int that increments everytime an AI finishes their lerp, once equal to the amount to batch all have finished
+	//And go to the next n amount of ai to batch
+	int AllAIHaveFinished = 0;
+	bool bQueuePatrolEmpty = true;
 };

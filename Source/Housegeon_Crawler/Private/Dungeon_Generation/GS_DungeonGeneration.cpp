@@ -76,6 +76,11 @@ void AGS_DungeonGeneration::Set_AI_Manager(AAI_Manager* AIManager_PARAM)
     }
 }
 
+void AGS_DungeonGeneration::Notify_AI_Manager_Patrol_Batch(FAIManagerBatchPacket BatchPacketToSend)
+{
+    myAIManager->Add_Patrol_Function_To_Batch(BatchPacketToSend);
+}
+
 void AGS_DungeonGeneration::UpdateOldMovementCell(FIntPoint CellInfo)
 {
     //First check if the inputted cell info is within bounds to avoid crashing

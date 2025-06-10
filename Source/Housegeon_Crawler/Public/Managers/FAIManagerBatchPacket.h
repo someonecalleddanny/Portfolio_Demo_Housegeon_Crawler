@@ -3,10 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FAIManagerBatchPacket.generated.h"
 
-
+USTRUCT(BlueprintType)
 struct FAIManagerBatchPacket 
 {
+	GENERATED_BODY()
+
 	//These are the start locations/rotations that will be used for the lerp. I used 6 seperate floats instead of using
 	//... start/end location/rotation because that would make an increased overhead as well as having more floats in general
 	float StartX = 0.f;
