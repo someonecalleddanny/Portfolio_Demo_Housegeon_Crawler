@@ -20,7 +20,7 @@ public:
 
 	void Set_Max_Entity_Count(int Amount);
 
-	void Add_Patrol_Function_To_Batch(FAIManagerBatchPacket AIBatchPacket);
+	void Push_Patrol_Function_To_Batch(FAIManagerBatchPacket AIBatchPacket);
 
 protected:
 	// Called when the game starts or when spawned
@@ -32,16 +32,21 @@ protected:
 	int PatrolHead = 0;
 	int PatrolTail = 0;
 
+	UPROPERTY()
+	TArray<FAIManagerBatchPacket> TickContainer;
+
+	FAIManagerBatchPacket Pop_Patrol_Queue_Container();
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 private:
+
 	int MaxBatchableEntitiesInWorld = 0;
 
 	int MaxAIToBatchInTick = 5;
 	//Have an int that increments everytime an AI finishes their lerp, once equal to the amount to batch all have finished
 	//And go to the next n amount of ai to batch
 	int AllAIHaveFinished = 0;
-	bool bQueuePatrolEmpty = true;
 };

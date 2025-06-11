@@ -1847,7 +1847,7 @@ void AHousegeon_Game_Base::Dungeon_Logic_Finished()
 		FTransform TempTransform;
 		AAI_Manager* ManagerToMoveToGS = GetWorld()->SpawnActor<AAI_Manager>(AAI_Manager::StaticClass(), TempTransform);
 
-		DungeonGameState->Set_AI_Manager(ManagerToMoveToGS);
+		DungeonGameState->Set_AI_Manager(ManagerToMoveToGS, AmountOfEnemiesToSpawn);
 	}
 	else 
 	{

@@ -31,11 +31,11 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 		UE_LOG(LogTemp, Warning, TEXT("EnemyAIController possessed: %s"), *InPawn->GetName());
 
 		//SpawnedEnemy();
-		Start_AI();
+		//Start_AI();
 		//SetRandomRotation();
 
 		//Do the delegate call later because the possession comes after the delegate is broadcasted within the GS
-		//myDungeonState->OnGridReady.AddDynamic(this, &AEnemyAIController::SpawnedEnemy);
+		myDungeonState->OnAIManagerReady.AddDynamic(this, &AEnemyAIController::SpawnedEnemy);
 	}
 	else
 	{
@@ -132,11 +132,19 @@ void AEnemyAIController::Choose_Random_Patrol()
 
 void AEnemyAIController::Move_Forward()
 {
+	UE_LOG(LogTemp, Display, TEXT("Moving forward"));
+
 	FAIManagerBatchPacket BatchPacketToSend;
+
+	
 	BatchPacketToSend.FunctionWrapperOnFinished = [this]()
 		{
 			OnFinished();
 		};
+	
+	
+	BatchPacketToSend.ControlledPawnRef = ControlledPawn;
+
 
 	myDungeonState->Notify_AI_Manager_Patrol_Batch(BatchPacketToSend);
 }

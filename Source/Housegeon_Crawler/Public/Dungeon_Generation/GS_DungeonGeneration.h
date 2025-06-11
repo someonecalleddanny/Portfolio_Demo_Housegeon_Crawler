@@ -15,7 +15,7 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGridReady);
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAIReady);
 /**
  * 
  */
@@ -29,7 +29,7 @@ public:
 	//This function updates the global player coords (Used for AI) as well as setting the cell as not movable onto
 	void SetPlayerSpawnInformation(FIntPoint PlayerCellInfo);
 
-	void Set_AI_Manager(AAI_Manager* AIManager_PARAM);
+	void Set_AI_Manager(AAI_Manager* AIManager_PARAM, int MaxSpawnedEntities);
 
 	void Notify_AI_Manager_Patrol_Batch(FAIManagerBatchPacket BatchPacketToSend);
 
@@ -45,6 +45,7 @@ public:
 	TArray<TArray<bool>> NavigationGrid;
 
 	FOnGridReady OnGridReady;
+	FOnAIReady OnAIManagerReady;
 
 	bool Can_Move_Forward(int StartX, int StartY, float CurrentYaw);
 	void Moving_Forward(int& StartX, int &StartY, float CurrentYaw);

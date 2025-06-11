@@ -21,12 +21,17 @@ void AAI_Manager::Set_Max_Entity_Count(int Amount)
 	QueuePatrolBatcher.SetNum(MaxBatchableEntitiesInWorld);
 }
 
-void AAI_Manager::Add_Patrol_Function_To_Batch(FAIManagerBatchPacket AIBatchPacket)
+void AAI_Manager::Push_Patrol_Function_To_Batch(FAIManagerBatchPacket AIBatchPacket)
 {
+	if (QueuePatrolBatcher.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("You forgot to set the patrol queue batcher size dumba**"));
+		return;
+	}
 	//Check if the inputted AI controller is valid
 	if (!(AIBatchPacket.ControlledPawnRef.IsValid()))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Inputted AI controller not valid!!!"));
+		UE_LOG(LogTemp, Error, TEXT("AI Manager: Inputted AI controller not valid!!!"));
 		return;
 	}
 
@@ -38,17 +43,13 @@ void AAI_Manager::Add_Patrol_Function_To_Batch(FAIManagerBatchPacket AIBatchPack
 		return;
 	}
 
+	UE_LOG(LogTemp, Display, TEXT("Pushed Patrol ai packet to ai manager"));
+
 	QueuePatrolBatcher[PatrolTail] = AIBatchPacket;
 
 	//If reached the end of the array with the tail, wrap around to the start of the array as am using a circular queue
 	//Useful wrapper, use a modulus to check if the next index moved to is out of bounds, if index 10 = size 10 set to 0
 	PatrolTail = (PatrolTail + 1) % QueuePatrolBatcher.Num();
-
-	//So, if the queue was empty, set it to false to allow the tick to do its business
-	if (bQueuePatrolEmpty) 
-	{
-		bQueuePatrolEmpty = false;
-	}
 }
 
 // Called when the game starts or when spawned
@@ -57,7 +58,27 @@ void AAI_Manager::BeginPlay()
 	Super::BeginPlay();
 	
 	//GetWorld()->GetTimerManager().SetTimer(TH_PursueBatcher, this, &AAI_Manager::Timer_Batch_Pursue_Events, 1.f, true);
+	TickContainer.SetNum(MaxAIToBatchInTick);
+}
 
+FAIManagerBatchPacket AAI_Manager::Pop_Patrol_Queue_Container()
+{
+	FAIManagerBatchPacket ReturnedPacket;
+
+	//Check if the pawn controlled is valid, a major checker as a lerp would not function without it
+	if (QueuePatrolBatcher[PatrolHead].ControlledPawnRef.IsValid()) 
+	{
+		UE_LOG(LogTemp, Display, TEXT("Pop valid for ai batch packet"));
+
+		//Set the returned packet to what is at the current head and then increment the head (allowing for wrapping)
+		ReturnedPacket = QueuePatrolBatcher[PatrolHead];
+		PatrolHead = (PatrolHead + 1) % QueuePatrolBatcher.Num();
+		return ReturnedPacket;
+	}
+
+	//if there is nothing at the head to pop, means that the queue is empty
+	UE_LOG(LogTemp, Display, TEXT("The patrol queue is empty"));
+	return ReturnedPacket;
 }
 
 // Called every frame
@@ -65,19 +86,10 @@ void AAI_Manager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//Instantly skip if the queue is empty, set to empty at the end of the tick if you want to check how it is set to true
-	if (bQueuePatrolEmpty) return;
-
-	//Create a temp head int as I will be going and lerping through every nth controlled pawn 
-	int TempHead = PatrolHead;
-
-	for (int i = 0; i < MaxAIToBatchInTick; i++)
+	for (int i = 0; i < TickContainer.Num(); i++)
 	{
-		//Make sure that the head does not go out of bounds by making it wrap round to the start
-		TempHead = (PatrolHead + i) % QueuePatrolBatcher.Num();
-
 		//Set a temp packet that is addressed to the indexed ai packet for readability
-		FAIManagerBatchPacket& TempPacket = QueuePatrolBatcher[TempHead];
+		FAIManagerBatchPacket& TempPacket = TickContainer[i];
 
 		//Check if further ai
 		//have been batched via the ai controller, if not instantly go to the next item (possibility of one ai finishing
@@ -97,32 +109,16 @@ void AAI_Manager::Tick(float DeltaTime)
 			//Check if the function wrapper has been set
 			if (TempPacket.FunctionWrapperOnFinished)
 			{
-				//Call the function wrapper, there is a chance that if I am stupid and forget to wrap the whole game crashes
-				//but I will minimise my stupidity
+				//Call the function wrapper to the ai controller, if not valid, will crash the game but that's why I validate
+				//the controlled pawn as, if that dies, so will the ai controller
 				TempPacket.FunctionWrapperOnFinished();
-				//After calling the event I want to pop out the controlled pawn
-				TempPacket.ControlledPawnRef = nullptr;
-				//Also for extra safety pop out the function wrapper so not called by mistake
-				TempPacket.FunctionWrapperOnFinished = nullptr;
-				AllAIHaveFinished++;
+				
+				//After finishing, the AI has a new state, so I am assuming it has already been pushed to the AI patrol
+				//queue by the time I get to this function, this means I can pop whatever is at the head and execute it
+				//on the next tick cycle, the pop function does check if the queue is empty so will not unecessarily
+				//increment the head index
+				TickContainer[i] = Pop_Patrol_Queue_Container();
 			}
-		}
-	}
-
-	//After checking all n AI, check if all of them have finished their task, then go to the next batch
-	if (AllAIHaveFinished == MaxAIToBatchInTick) 
-	{
-		//Set back to 0 to then check the next n amount of ai to batch events to
-		AllAIHaveFinished = 0;
-
-		//Then add to the next index of what would be the max (wrap if needed)
-		PatrolHead = (PatrolHead + MaxAIToBatchInTick) % QueuePatrolBatcher.Num();
-
-		//Then check if the new head index has an empty controlled pawn, if yes then that means the queue is currently empty
-		//and waiting for the next controlled pawn to be added
-		if (!(QueuePatrolBatcher[PatrolHead].ControlledPawnRef.IsValid())) 
-		{
-			bQueuePatrolEmpty = true;
 		}
 	}
 }
