@@ -112,7 +112,7 @@ void AEnemyAIController::Start_AI()
 
 void AEnemyAIController::Choose_Random_Patrol()
 {
-	UE_LOG(LogTemp, Display, TEXT("Choosing Random Patrol"));
+	//UE_LOG(LogTemp, Display, TEXT("Choosing Random Patrol"));
 	int RandomInt = FMath::RandRange(0, 3);
 	//Debugging
 	RandomInt = 0;
@@ -124,15 +124,14 @@ void AEnemyAIController::Choose_Random_Patrol()
 		Move_Forward();
 		break;
 	default:
-		MyCurrentAIState = ECurrent_AI_State::MoveForward;
-		Move_Forward();
+		UE_LOG(LogTemp, Error, TEXT("Your random patrol index is invalid within your ai controller"));
 		break;
 	}
 }
 
 void AEnemyAIController::Move_Forward()
 {
-	UE_LOG(LogTemp, Display, TEXT("Moving forward"));
+	//UE_LOG(LogTemp, Display, TEXT("Moving forward"));
 
 	FAIManagerBatchPacket BatchPacketToSend;
 
@@ -151,6 +150,7 @@ void AEnemyAIController::Move_Forward()
 
 void AEnemyAIController::OnFinished()
 {
-	UE_LOG(LogTemp, Warning, TEXT("EnemyAIController Finished event: %s"), *ControlledPawn->GetName());
-	//Start_AI();
+	//Debug to check if my wrapper works
+	//UE_LOG(LogTemp, Warning, TEXT("EnemyAIController Finished event: %s"), *ControlledPawn->GetName());
+	Start_AI();
 }

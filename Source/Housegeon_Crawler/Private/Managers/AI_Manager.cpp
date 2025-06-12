@@ -43,7 +43,7 @@ void AAI_Manager::Push_Patrol_Function_To_Batch(FAIManagerBatchPacket AIBatchPac
 		return;
 	}
 
-	UE_LOG(LogTemp, Display, TEXT("Pushed Patrol ai packet to ai manager"));
+	//UE_LOG(LogTemp, Display, TEXT("Pushed Patrol ai packet to ai manager"));
 
 	QueuePatrolBatcher[PatrolTail] = AIBatchPacket;
 
@@ -68,16 +68,20 @@ FAIManagerBatchPacket AAI_Manager::Pop_Patrol_Queue_Container()
 	//Check if the pawn controlled is valid, a major checker as a lerp would not function without it
 	if (QueuePatrolBatcher[PatrolHead].ControlledPawnRef.IsValid()) 
 	{
-		UE_LOG(LogTemp, Display, TEXT("Pop valid for ai batch packet"));
+		//UE_LOG(LogTemp, Display, TEXT("Pop valid for ai batch packet"));
 
 		//Set the returned packet to what is at the current head and then increment the head (allowing for wrapping)
 		ReturnedPacket = QueuePatrolBatcher[PatrolHead];
+
+		FAIManagerBatchPacket UnInitPacket;
+		QueuePatrolBatcher[PatrolHead] =  UnInitPacket;
+
 		PatrolHead = (PatrolHead + 1) % QueuePatrolBatcher.Num();
 		return ReturnedPacket;
 	}
 
 	//if there is nothing at the head to pop, means that the queue is empty
-	UE_LOG(LogTemp, Display, TEXT("The patrol queue is empty"));
+	//UE_LOG(LogTemp, Display, TEXT("The patrol queue is empty"));
 	return ReturnedPacket;
 }
 
@@ -91,12 +95,15 @@ void AAI_Manager::Tick(float DeltaTime)
 		//Set a temp packet that is addressed to the indexed ai packet for readability
 		FAIManagerBatchPacket& TempPacket = TickContainer[i];
 
-		//Check if further ai
-		//have been batched via the ai controller, if not instantly go to the next item (possibility of one ai finishing
-		//their movement at a different time), In the future I will add a skipper so that really slow ai won't slog everyone
-		//down (because I wait until all n ai items have finished until batching the next n amount)
+		//The tick constantly checks if new items have been added to the patrol queue, if yes, add to the tick container
+		// by popping the head from the patrol queue. Don't worry, if nothing at head, will return an empty AI packet which
+		// will have an invalid controlledpawnref which is what the if function constantly checks. The controlled pawn having
+		// a pointer essentially means that the ai manager has set something up, there are checks below to stop any stupid
+		// coding and crashing (Such as not creating a function wrapper correctly)
+		//And, for safety, execute the function on the next tick cycle.
 		if (!(TempPacket.ControlledPawnRef.IsValid()))
 		{
+			TickContainer[i] = Pop_Patrol_Queue_Container();
 			continue;
 		}
 
@@ -113,8 +120,9 @@ void AAI_Manager::Tick(float DeltaTime)
 				//the controlled pawn as, if that dies, so will the ai controller
 				TempPacket.FunctionWrapperOnFinished();
 				
+				
 				//After finishing, the AI has a new state, so I am assuming it has already been pushed to the AI patrol
-				//queue by the time I get to this function, this means I can pop whatever is at the head and execute it
+				//queue by the time I get to the function below, this means I can pop whatever is at the head and execute it
 				//on the next tick cycle, the pop function does check if the queue is empty so will not unecessarily
 				//increment the head index
 				TickContainer[i] = Pop_Patrol_Queue_Container();
