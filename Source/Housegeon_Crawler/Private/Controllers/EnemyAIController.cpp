@@ -135,14 +135,12 @@ void AEnemyAIController::Move_Forward()
 
 	FAIManagerBatchPacket BatchPacketToSend;
 
-	
-	BatchPacketToSend.FunctionWrapperOnFinished = [this]()
+	TFunction<void()> TempFunctionWrapper = [this]()
 		{
 			OnFinished();
 		};
-	
-	
-	BatchPacketToSend.ControlledPawnRef = ControlledPawn;
+
+	BatchPacketToSend.Set_Batch_Packet(ControlledPawn, false, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, TempFunctionWrapper);
 
 
 	myDungeonState->Notify_AI_Manager_Patrol_Batch(BatchPacketToSend);

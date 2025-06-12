@@ -10,15 +10,29 @@ struct FAIManagerBatchPacket
 {
 	GENERATED_BODY()
 
+	FAIManagerBatchPacket Set_Batch_Packet(TWeakObjectPtr<APawn> ControlledPawnRef_Param, bool bIsRotating_Param,
+		float AX, float AY, float AZ, float BX, float BY, float BZ, float TimeToFinishEvent,
+		TFunction<void()> BindOnFinishedEvent);
+
+private:
 	//These are the start locations/rotations that will be used for the lerp. I used 6 seperate floats instead of using
 	//... start/end location/rotation because that would make an increased overhead as well as having more floats in general
-	float StartX = 0.f;
-	float StartY = 0.f;
-	float StartZ = 0.f;
 
-	float EndX = 0.f;
-	float EndY = 0.f;
-	float EndZ = 0.f;
+	struct FStartLocationOrRotation
+	{
+		float StartX = 0.f;
+		float StartY = 0.f;
+		float StartZ = 0.f;
+	};
+
+	struct FEndLocationOrRotation
+	{
+		float EndX = 0.f;
+		float EndY = 0.f;
+		float EndZ = 0.f;
+	};
+
+	FStartLocationOrRotation myStartRotOrLoc;
 
 	//The bool determines if the enemy is going to be rotating or moving to another cell in the ai manager tick
 	bool bIsRotating = false;
