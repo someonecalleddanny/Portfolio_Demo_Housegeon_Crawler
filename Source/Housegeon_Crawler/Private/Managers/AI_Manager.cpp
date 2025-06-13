@@ -29,7 +29,7 @@ void AAI_Manager::Push_Patrol_Function_To_Batch(FAIManagerBatchPacket AIBatchPac
 		return;
 	}
 	//Check if the inputted AI controller is valid
-	if (!(AIBatchPacket.ControlledPawnRef.IsValid()))
+	if (!(AIBatchPacket.Get_Pawn().IsValid()))
 	{
 		UE_LOG(LogTemp, Error, TEXT("AI Manager: Inputted AI controller not valid!!!"));
 		return;
@@ -37,7 +37,7 @@ void AAI_Manager::Push_Patrol_Function_To_Batch(FAIManagerBatchPacket AIBatchPac
 
 	//First check if the pursue event batcher is full (It should not be but at least I can debug where the wrong things
 	//are going) This is because each AI controller should only batch one event which the max entity counts for
-	if (PatrolHead == PatrolTail && QueuePatrolBatcher[PatrolHead].ControlledPawnRef.IsValid())
+	if (PatrolHead == PatrolTail && QueuePatrolBatcher[PatrolHead].Get_Pawn().IsValid())
 	{
 		UE_LOG(LogTemp, Error, TEXT("Pursue Batcher container in ai manager is full, should not happen!"));
 		return;
@@ -66,7 +66,7 @@ FAIManagerBatchPacket AAI_Manager::Pop_Patrol_Queue_Container()
 	FAIManagerBatchPacket ReturnedPacket;
 
 	//Check if the pawn controlled is valid, a major checker as a lerp would not function without it
-	if (QueuePatrolBatcher[PatrolHead].ControlledPawnRef.IsValid()) 
+	if (QueuePatrolBatcher[PatrolHead].Get_Pawn().IsValid())
 	{
 		//UE_LOG(LogTemp, Display, TEXT("Pop valid for ai batch packet"));
 
@@ -101,32 +101,58 @@ void AAI_Manager::Tick(float DeltaTime)
 		// a pointer essentially means that the ai manager has set something up, there are checks below to stop any stupid
 		// coding and crashing (Such as not creating a function wrapper correctly)
 		//And, for safety, execute the function on the next tick cycle.
-		if (!(TempPacket.ControlledPawnRef.IsValid()))
+		if (!(TempPacket.Get_Pawn().IsValid()))
 		{
 			TickContainer[i] = Pop_Patrol_Queue_Container();
 			continue;
 		}
 
-		//Looks ugly but I need to compare when all three floats are relatively the same (floats can be fickle when checking
-		// if exactly equal)
-		if(FMath::IsNearlyEqual(TempPacket.StartX, TempPacket.EndX)
-			&& FMath::IsNearlyEqual(TempPacket.StartY, TempPacket.EndY)
-				&& FMath::IsNearlyEqual(TempPacket.StartZ, TempPacket.EndZ))
+		if (TempPacket.Is_Rotating()) 
 		{
-			//Check if the function wrapper has been set
-			if (TempPacket.FunctionWrapperOnFinished)
-			{
-				//Call the function wrapper to the ai controller, if not valid, will crash the game but that's why I validate
-				//the controlled pawn as, if that dies, so will the ai controller
-				TempPacket.FunctionWrapperOnFinished();
-				
-				
-				//After finishing, the AI has a new state, so I am assuming it has already been pushed to the AI patrol
-				//queue by the time I get to the function below, this means I can pop whatever is at the head and execute it
-				//on the next tick cycle, the pop function does check if the queue is empty so will not unecessarily
-				//increment the head index
-				TickContainer[i] = Pop_Patrol_Queue_Container();
-			}
+			/*
+				Do rotation logic
+			*/
+		}
+		else 
+		{
+			//Get my three floats which will be translated into FVectors
+			FThreeFloatContainer StartFloats = TempPacket.Get_Start_XYZ();
+			FThreeFloatContainer EndFloats = TempPacket.Get_End_XYZ();
+
+			//Here, create the FVectors for the lerp
+			FVector StartLocation = FVector(StartFloats.X, StartFloats.Y, StartFloats.Z);
+			FVector EndLocation = FVector(EndFloats.X, EndFloats.Y, EndFloats.Z);
+
+			// Calculate new alpha with deltatime to ensure that frame drops don't affect speed
+			float AlphaIncrement = DeltaTime / TempPacket.Get_Time_To_Finish();
+			float NewAlpha = TempPacket.Get_Alpha() + AlphaIncrement;
+
+			TempPacket.Set_Alpha(NewAlpha);
+
+			//Create a smooth step ease for the alpha to not be robotic (Sorry, looked up equation for smooth step to make
+			//this work)
+			float EasedAlpha = NewAlpha * NewAlpha * (3 - 2 * NewAlpha);  
+
+			// Lerp location
+			FVector NewLocation = FMath::Lerp(StartLocation, EndLocation, EasedAlpha);
+
+			TempPacket.Get_Pawn()->SetActorLocation(NewLocation);
+		}
+
+		//Check if the alpha is at 1, if yes, that means the lerp has finished which means that the temp packet can finally
+		//call the onfinished event
+		if(TempPacket.Get_Alpha() >= 1.f)
+		{
+			//Call the function wrapper to the ai controller, if not valid, will crash the game but that's why I validate
+			//the controlled pawn as, if that dies, so will the ai controller (ALSO, checks in the struct if the wrapper is
+			//valid)
+			TempPacket.Call_OnFinished();
+
+			//After finishing, the AI has a new state, so I am assuming it has already been pushed to the AI patrol
+			//queue by the time I get to the function below, this means I can pop whatever is at the head and execute it
+			//on the next tick cycle, the pop function does check if the queue is empty so will not unecessarily
+			//increment the head index
+			TickContainer[i] = Pop_Patrol_Queue_Container();
 		}
 	}
 }

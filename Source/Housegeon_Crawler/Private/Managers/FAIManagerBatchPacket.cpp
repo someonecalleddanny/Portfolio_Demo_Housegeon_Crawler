@@ -25,13 +25,60 @@ FAIManagerBatchPacket FAIManagerBatchPacket::Set_Batch_Packet(TWeakObjectPtr<APa
     bIsRotating = bIsRotating_Param;
     FunctionWrapperOnFinished = BindOnFinishedEvent;
 
-    StartX = AX;
-    StartY = AY;
-    StartZ = AZ;
+    myStartRotOrLoc.X = AX;
+    myStartRotOrLoc.Y = AY;
+    myStartRotOrLoc.Z = AZ;
 
-    EndX = BX;
-    EndY = BY;
-    EndZ = BZ;
+    myEndRotOrLoc.X = BX;
+    myEndRotOrLoc.Y = BY;
+    myEndRotOrLoc.Z = BZ;
 
     return *(this);
+}
+
+void FAIManagerBatchPacket::Set_Alpha(float Alpha)
+{
+    CurrentAlpha = FMath::Clamp(Alpha, 0.f, 1.f);
+}
+
+FThreeFloatContainer FAIManagerBatchPacket::Get_Start_XYZ()
+{
+    return myStartRotOrLoc;
+}
+
+FThreeFloatContainer FAIManagerBatchPacket::Get_End_XYZ()
+{
+    return myEndRotOrLoc;
+}
+
+TWeakObjectPtr<APawn> FAIManagerBatchPacket::Get_Pawn()
+{
+    return ControlledPawnRef;
+}
+
+bool FAIManagerBatchPacket::Is_Rotating()
+{
+    return bIsRotating;
+}
+
+float FAIManagerBatchPacket::Get_Time_To_Finish()
+{
+    return TimeToFinish;
+}
+
+float FAIManagerBatchPacket::Get_Alpha()
+{
+    return CurrentAlpha;
+}
+
+void FAIManagerBatchPacket::Call_OnFinished()
+{
+    if (FunctionWrapperOnFinished) 
+    {
+        FunctionWrapperOnFinished();
+    }
+    else 
+    {
+        UE_LOG(LogTemp, Error, TEXT("Function wrapper invalid!"));
+    }
 }

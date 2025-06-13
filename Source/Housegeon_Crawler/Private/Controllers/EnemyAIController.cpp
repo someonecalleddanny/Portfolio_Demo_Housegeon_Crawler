@@ -149,6 +149,6 @@ void AEnemyAIController::Move_Forward()
 void AEnemyAIController::OnFinished()
 {
 	//Debug to check if my wrapper works
-	//UE_LOG(LogTemp, Warning, TEXT("EnemyAIController Finished event: %s"), *ControlledPawn->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("EnemyAIController Finished event: %s"), *ControlledPawn->GetName());
 	Start_AI();
 }
