@@ -32,6 +32,9 @@ class HOUSEGEON_CRAWLER_API AEnemyAIController : public AAIController
 {
 	GENERATED_BODY()
 
+public:
+	void SetCurretXY(FIntPoint CellLocation);
+
 protected:
 
 	UPROPERTY()

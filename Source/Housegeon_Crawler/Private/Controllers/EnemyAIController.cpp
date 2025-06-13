@@ -5,6 +5,11 @@
 
 #include "Managers/FAIManagerBatchPacket.h"
 
+void AEnemyAIController::SetCurretXY(FIntPoint CellLocation)
+{
+	CurrentXY = CellLocation;
+}
+
 void AEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
@@ -29,10 +34,6 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 	if (myDungeonState)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("EnemyAIController possessed: %s"), *InPawn->GetName());
-
-		//SpawnedEnemy();
-		//Start_AI();
-		//SetRandomRotation();
 
 		//Do the delegate call later because the possession comes after the delegate is broadcasted within the GS
 		myDungeonState->OnAIManagerReady.AddDynamic(this, &AEnemyAIController::SpawnedEnemy);
@@ -70,7 +71,6 @@ void AEnemyAIController::SetRandomRotation()
 	//AI)
 	FRotator CustomRotationSpawn(0.0f, 0.0f, 0.0f);
 
-
 	int RandSpawn = FMath::RandRange(0, 3);
 
 	switch (RandSpawn)
@@ -102,6 +102,10 @@ void AEnemyAIController::SetRandomRotation()
 
 	ControlledPawn->SetActorRotation(FQuat(CustomRotationSpawn));
 	//SetControlRotation(CustomRotationSpawn);
+
+	//Debug to check if spawn is working
+	//UE_LOG(LogTemp, Warning, TEXT("EnemyAIController: %s"), *ControlledPawn->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("Current Normalised Yaw = %f"), NormalizedYaw);
 }
 
 void AEnemyAIController::Start_AI()
@@ -173,7 +177,7 @@ void AEnemyAIController::Notify_Rotate_Enemy_By_X_Amount(float YawAdder)
 	float Error_Tolerance = 0.5f;
 
 	//Add the yaw with either a positive or negative adder to simulate the left and right rotations
-	float AddedYaw = NormalizedYaw + YawAdder;
+	NormalizedYaw += YawAdder;
 
 	//This is the Yaw that will actually set the rotation of the controlled pawn, do this because 
 	//I am not reading the pawn's world rotation when checking for rotation within AI functions as
@@ -182,13 +186,13 @@ void AEnemyAIController::Notify_Rotate_Enemy_By_X_Amount(float YawAdder)
 	float AddedWorldYaw = WorldYaw + YawAdder;
 
 	//These are the wrappers
-	if (AddedYaw >= 360.f - Error_Tolerance)
+	if (NormalizedYaw >= 360.f - Error_Tolerance)
 	{
-		AddedYaw -= 360.f;
+		NormalizedYaw -= 360.f;
 	}
-	else if (AddedYaw <= 0.f + Error_Tolerance)
+	else if (NormalizedYaw <= 0.f + Error_Tolerance)
 	{
-		AddedYaw += 360.f;
+		NormalizedYaw += 360.f;
 	}
 
 	//Set the enemy speed by getting the average speed of the enemy and times it by the magnitude of your rotation
@@ -220,7 +224,7 @@ void AEnemyAIController::Notify_Rotate_Enemy_By_X_Amount(float YawAdder)
 void AEnemyAIController::OnFinished()
 {
 	//Debug to check if my wrapper works
-	UE_LOG(LogTemp, Warning, TEXT("EnemyAIController Finished event: %s"), *ControlledPawn->GetName());
-	UE_LOG(LogTemp, Warning, TEXT("Current Normalised Yaw = %f"), NormalizedYaw);
-	//Start_AI();
+	//UE_LOG(LogTemp, Warning, TEXT("EnemyAIController Finished event: %s"), *ControlledPawn->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("Current Normalised Yaw = %f"), NormalizedYaw);
+	Start_AI();
 }

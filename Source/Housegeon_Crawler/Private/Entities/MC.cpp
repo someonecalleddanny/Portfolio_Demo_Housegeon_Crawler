@@ -120,12 +120,6 @@ void AMC::Spawn_At_Center_Grid()
 			myGridTransform.X = DungeonGridInfo.Num() / 2;
 			myGridTransform.Y = DungeonGridInfo[0].Num() / 2;
 
-			//For now, won't add logic to update walked on/off grids, that's for later with AI
-
-			/*
-				TO DO: Add the walk on/ walk off grid once AI is started
-			*/
-
 			OldCell.X = DungeonGridInfo.Num() / 2;
 			OldCell.Y = DungeonGridInfo[0].Num() / 2;
 
