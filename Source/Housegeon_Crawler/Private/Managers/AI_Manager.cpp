@@ -107,31 +107,38 @@ void AAI_Manager::Tick(float DeltaTime)
 			continue;
 		}
 
+		//Get my three floats which will be translated into FVectors or FRotators
+		FThreeFloatContainer StartFloats = TempPacket.Get_Start_XYZ();
+		FThreeFloatContainer EndFloats = TempPacket.Get_End_XYZ();
+
+		// Calculate new alpha with deltatime to ensure that frame drops don't affect speed
+		float AlphaIncrement = DeltaTime / TempPacket.Get_Time_To_Finish();
+		float NewAlpha = TempPacket.Get_Alpha() + AlphaIncrement;
+
+		//Save the current alpha for the next tick cycle
+		TempPacket.Set_Alpha(NewAlpha);
+
+		//Create a smooth step ease for the alpha to not be robotic (Sorry, looked up equation for smooth step to make
+		//this work)
+		float EasedAlpha = NewAlpha * NewAlpha * (3 - 2 * NewAlpha);
+
+		//Then either set the rotation or location of the controlled pawn
 		if (TempPacket.Is_Rotating()) 
 		{
-			/*
-				Do rotation logic
-			*/
+			//Put in the z for where the y should kinda be because Unreal puts yaw in the second slot when in bp it is on
+			//the third, (ONLY rotating yaw!)
+			FRotator StartRotation = FRotator(0.f, StartFloats.Z, 0.f);
+			FRotator EndRotation = FRotator(0.f, EndFloats.Z, 0.f);
+
+			FRotator NewRotation = FMath::Lerp(StartRotation, EndRotation, EasedAlpha);
+
+			TempPacket.Get_Pawn()->SetActorRotation(NewRotation);
 		}
 		else 
 		{
-			//Get my three floats which will be translated into FVectors
-			FThreeFloatContainer StartFloats = TempPacket.Get_Start_XYZ();
-			FThreeFloatContainer EndFloats = TempPacket.Get_End_XYZ();
-
 			//Here, create the FVectors for the lerp
 			FVector StartLocation = FVector(StartFloats.X, StartFloats.Y, StartFloats.Z);
 			FVector EndLocation = FVector(EndFloats.X, EndFloats.Y, EndFloats.Z);
-
-			// Calculate new alpha with deltatime to ensure that frame drops don't affect speed
-			float AlphaIncrement = DeltaTime / TempPacket.Get_Time_To_Finish();
-			float NewAlpha = TempPacket.Get_Alpha() + AlphaIncrement;
-
-			TempPacket.Set_Alpha(NewAlpha);
-
-			//Create a smooth step ease for the alpha to not be robotic (Sorry, looked up equation for smooth step to make
-			//this work)
-			float EasedAlpha = NewAlpha * NewAlpha * (3 - 2 * NewAlpha);  
 
 			// Lerp location
 			FVector NewLocation = FMath::Lerp(StartLocation, EndLocation, EasedAlpha);

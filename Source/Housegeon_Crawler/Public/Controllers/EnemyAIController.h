@@ -69,5 +69,8 @@ private:
 
 	void Move_Forward();
 
+	//Add the rotation you want the pawn to go by and notify the ai controller (clamped to -360 to 360 for the Yaw adder)
+	void Notify_Rotate_Enemy_By_X_Amount(float YawAdder);
+
 	void OnFinished();
 };

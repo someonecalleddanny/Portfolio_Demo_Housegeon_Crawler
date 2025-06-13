@@ -113,9 +113,9 @@ void AEnemyAIController::Start_AI()
 void AEnemyAIController::Choose_Random_Patrol()
 {
 	//UE_LOG(LogTemp, Display, TEXT("Choosing Random Patrol"));
-	int RandomInt = FMath::RandRange(0, 3);
+	int RandomInt = FMath::RandRange(1, 3);
 	//Debugging
-	RandomInt = 0;
+	//RandomInt = 3;
 
 	switch (RandomInt) 
 	{
@@ -123,6 +123,22 @@ void AEnemyAIController::Choose_Random_Patrol()
 		MyCurrentAIState = ECurrent_AI_State::MoveForward;
 		Move_Forward();
 		break;
+
+	case 1:
+		MyCurrentAIState = ECurrent_AI_State::Rotate90;
+		Notify_Rotate_Enemy_By_X_Amount(90.f);
+		break;
+
+	case 2:
+		MyCurrentAIState = ECurrent_AI_State::RotateMinus90;
+		Notify_Rotate_Enemy_By_X_Amount(-90.f);
+		break;
+
+	case 3:
+		MyCurrentAIState = ECurrent_AI_State::Rotate180;
+		Notify_Rotate_Enemy_By_X_Amount(180.f);
+		break;
+
 	default:
 		UE_LOG(LogTemp, Error, TEXT("Your random patrol index is invalid within your ai controller"));
 		break;
@@ -146,9 +162,65 @@ void AEnemyAIController::Move_Forward()
 	myDungeonState->Notify_AI_Manager_Patrol_Batch(BatchPacketToSend);
 }
 
+void AEnemyAIController::Notify_Rotate_Enemy_By_X_Amount(float YawAdder)
+{
+	//Clamp, so I don't get huge added yaws. Does mean that can't have multiple rotations but for now it's fine as I
+	//expect set actor rotation to pick the shortest path which basically means I have to code better rotation logic
+	//Anyway if the need arises later on during the making of the game
+	YawAdder = FMath::Clamp(YawAdder, -360.f, 360.f);
+
+	//Create an error tolerance when needing to wrap the the normalized yaw from 0 - 360 range
+	float Error_Tolerance = 0.5f;
+
+	//Add the yaw with either a positive or negative adder to simulate the left and right rotations
+	float AddedYaw = NormalizedYaw + YawAdder;
+
+	//This is the Yaw that will actually set the rotation of the controlled pawn, do this because 
+	//I am not reading the pawn's world rotation when checking for rotation within AI functions as
+	//I have my own local rotation which dictates what is North,East etc with the NormalisedYaw variable.
+	float WorldYaw = ControlledPawn->GetActorRotation().Yaw;
+	float AddedWorldYaw = WorldYaw + YawAdder;
+
+	//These are the wrappers
+	if (AddedYaw >= 360.f - Error_Tolerance)
+	{
+		AddedYaw -= 360.f;
+	}
+	else if (AddedYaw <= 0.f + Error_Tolerance)
+	{
+		AddedYaw += 360.f;
+	}
+
+	//Set the enemy speed by getting the average speed of the enemy and times it by the magnitude of your rotation
+	float EnemySpeed = (0.4f) * (YawAdder / 90.f);
+
+	//If inputted negative yaw for going left, make sure to make the enemy speed positive again to not have instant speed
+	//for lerp
+	if (EnemySpeed < 0.f) 
+	{
+		EnemySpeed *= -1;
+	}
+
+	//Forward declare the batch packet
+	FAIManagerBatchPacket BatchPacketToSend;
+
+	//bind my onfinished event
+	TFunction<void()> TempFunctionWrapper = [this]()
+		{
+			OnFinished();
+		};
+
+	BatchPacketToSend.Set_Batch_Packet(ControlledPawn, true, 0.f, 0.f, WorldYaw, 0.f, 0.f, AddedWorldYaw,
+		EnemySpeed, TempFunctionWrapper);
+
+	//Then send off to the AI manager to execute the rotation (With a batch if other AI have sent their events)
+	myDungeonState->Notify_AI_Manager_Patrol_Batch(BatchPacketToSend);
+}
+
 void AEnemyAIController::OnFinished()
 {
 	//Debug to check if my wrapper works
 	UE_LOG(LogTemp, Warning, TEXT("EnemyAIController Finished event: %s"), *ControlledPawn->GetName());
-	Start_AI();
+	UE_LOG(LogTemp, Warning, TEXT("Current Normalised Yaw = %f"), NormalizedYaw);
+	//Start_AI();
 }
