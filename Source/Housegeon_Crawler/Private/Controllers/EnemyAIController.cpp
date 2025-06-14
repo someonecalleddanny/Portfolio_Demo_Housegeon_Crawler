@@ -180,7 +180,35 @@ void AEnemyAIController::Move_Forward()
 	}
 	else 
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Could Not move forward, going to rotate!"));
+		//Right, so if I cannot find a place to move forward to, keep choosing a random adder yaw until finding which yaw
+		//The enemy can move forward on, since this will require an animation, it will have to be batched but on finished
+		//I will make sure to call move forward function again so that the enemy can move forward on next batch
+		TArray<float> PossibleAdderYaws = { 90.f, 180.f, -90.f };
+		int RandIndex;
+
+		//Loop 3 times because the game only supports 4 yaw rotations (your current yaw could not move so need to check the
+		//other 3 if they are movable, there is a chance that the AI can be boxed in from walls and other AI blocking
+		//paths but I will deal with that below)
+		for (int i = 0; i < 3; i++) 
+		{
+			RandIndex = FMath::RandRange(0, PossibleAdderYaws.Num() - 1);
+			float RandomAdderYaw = PossibleAdderYaws[RandIndex];
+			PossibleAdderYaws.RemoveAt(RandIndex);
+
+			//If I found a suitable location in which I can move forward to, call the rotate adder event which
+			//batches the rotation for the ai manager to rotate the enemy
+			if(myDungeonState->Can_Move_Forward(CurrentXY.X, CurrentXY.Y, RandomAdderYaw))
+			{
+				//Change the current ai state to rotatedtomoveforward, because on finish it will call this move forward
+				//function again to check if the enemy can move forward
+				MyCurrentAIState = ECurrent_AI_State::RotatedToMoveForward;
+				Notify_Rotate_Enemy_By_X_Amount(RandomAdderYaw);
+				return;
+			}
+		}
+		//if the for loop could not find any yaw locations that the enemy could move from, means that it is stuck and
+		//just needs to wait until the way is clear
+		UE_LOG(LogTemp, Warning, TEXT("Enemy Is boxed in, going to just stay still for this tick cycle!"));
 	}
 
 	TFunction<void()> TempFunctionWrapper = [this]()
@@ -190,9 +218,10 @@ void AEnemyAIController::Move_Forward()
 
 	EndLocation.X = CurrentXY.X * 400.f;
 	EndLocation.Y = CurrentXY.Y * 400.f;
+	EndLocation.Z = StartLocation.Z;
 
 	BatchPacketToSend.Set_Batch_Packet(ControlledPawn, false, StartLocation.X, StartLocation.Y, StartLocation.Z,
-		EndLocation.X, EndLocation.Y, EndLocation.Z, EnemySpeed, TempFunctionWrapper);
+		EndLocation.X, EndLocation.Y, EndLocation.Z, EnemyWalkingSpeed, TempFunctionWrapper);
 
 
 	myDungeonState->Notify_AI_Manager_Patrol_Batch(BatchPacketToSend);
@@ -228,7 +257,7 @@ void AEnemyAIController::Notify_Rotate_Enemy_By_X_Amount(float YawAdder)
 	}
 
 	//Set the enemy speed by getting the average speed of the enemy and times it by the magnitude of your rotation
-	float TempSpeed = (EnemySpeed) * (YawAdder / 90.f);
+	float TempSpeed = (EnemyRotationSpeed) * (YawAdder / 90.f);
 
 	//If inputted negative yaw for going left, make sure to make the enemy speed positive again to not have instant speed
 	//for lerp
@@ -258,5 +287,15 @@ void AEnemyAIController::OnFinished()
 	//Debug to check if my wrapper works
 	//UE_LOG(LogTemp, Warning, TEXT("EnemyAIController Finished event: %s"), *ControlledPawn->GetName());
 	//UE_LOG(LogTemp, Warning, TEXT("Current Normalised Yaw = %f"), NormalizedYaw);
-	Start_AI();
+
+	if (MyCurrentAIState == ECurrent_AI_State::RotatedToMoveForward) 
+	{
+		MyCurrentAIState = ECurrent_AI_State::MoveForward;
+		Move_Forward();
+	}
+	else 
+	{
+		Start_AI();
+	}
+	
 }

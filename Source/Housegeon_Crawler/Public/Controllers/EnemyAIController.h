@@ -17,6 +17,7 @@ enum ECurrent_AI_State
 	CheckPlayer,
 	RandomPatrolMovementSelector,
 	MoveForward,
+	RotatedToMoveForward,
 	Rotate90,
 	RotateMinus90,
 	Rotate180,
@@ -53,7 +54,8 @@ protected:
 private:
 	FIntPoint CurrentXY;
 	float NormalizedYaw = 0.f;
-	float EnemySpeed = 0.4f;
+	float EnemyRotationSpeed = 0.4f;
+	float EnemyWalkingSpeed = 1.f;
 
 	void SetRandomRotation();
 
