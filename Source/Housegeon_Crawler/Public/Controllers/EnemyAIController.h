@@ -48,9 +48,12 @@ protected:
 	UFUNCTION()
 	void SpawnedEnemy();
 
+	void Register_Enemy_Location_Cell();
+
 private:
 	FIntPoint CurrentXY;
 	float NormalizedYaw = 0.f;
+	float EnemySpeed = 0.4f;
 
 	void SetRandomRotation();
 

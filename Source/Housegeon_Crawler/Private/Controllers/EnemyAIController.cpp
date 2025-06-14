@@ -53,6 +53,8 @@ void AEnemyAIController::SpawnedEnemy()
 		UE_LOG(LogTemp, Display, TEXT("The enemy has indeed been possessed!"));
 		SetRandomRotation();
 
+		Register_Enemy_Location_Cell();
+
 		Start_AI();
 	}
 	else 
@@ -60,6 +62,20 @@ void AEnemyAIController::SpawnedEnemy()
 		UE_LOG(LogTemp, Error, TEXT("The enemy has NOT indeed been possessed!"));
 	}
 	
+}
+
+void AEnemyAIController::Register_Enemy_Location_Cell()
+{
+	if (!ControlledPawn) return;
+
+	FVector RawLocation = ControlledPawn->GetActorLocation();
+
+	CurrentXY.X = RawLocation.X / 400.f;
+	CurrentXY.Y = RawLocation.Y / 400.f;
+
+	/*
+		Will need to transfer to the GS
+	*/
 }
 
 void AEnemyAIController::SetRandomRotation()
@@ -117,7 +133,7 @@ void AEnemyAIController::Start_AI()
 void AEnemyAIController::Choose_Random_Patrol()
 {
 	//UE_LOG(LogTemp, Display, TEXT("Choosing Random Patrol"));
-	int RandomInt = FMath::RandRange(1, 3);
+	int RandomInt = FMath::RandRange(0, 3);
 	//Debugging
 	//RandomInt = 3;
 
@@ -155,12 +171,28 @@ void AEnemyAIController::Move_Forward()
 
 	FAIManagerBatchPacket BatchPacketToSend;
 
+	FVector StartLocation = ControlledPawn->GetActorLocation();
+	FVector EndLocation;
+
+	if (myDungeonState->Can_Move_Forward(CurrentXY.X, CurrentXY.Y, NormalizedYaw)) 
+	{
+		myDungeonState->Moving_Forward(CurrentXY.X, CurrentXY.Y, NormalizedYaw);
+	}
+	else 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could Not move forward, going to rotate!"));
+	}
+
 	TFunction<void()> TempFunctionWrapper = [this]()
 		{
 			OnFinished();
 		};
 
-	BatchPacketToSend.Set_Batch_Packet(ControlledPawn, false, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, TempFunctionWrapper);
+	EndLocation.X = CurrentXY.X * 400.f;
+	EndLocation.Y = CurrentXY.Y * 400.f;
+
+	BatchPacketToSend.Set_Batch_Packet(ControlledPawn, false, StartLocation.X, StartLocation.Y, StartLocation.Z,
+		EndLocation.X, EndLocation.Y, EndLocation.Z, EnemySpeed, TempFunctionWrapper);
 
 
 	myDungeonState->Notify_AI_Manager_Patrol_Batch(BatchPacketToSend);
@@ -196,13 +228,13 @@ void AEnemyAIController::Notify_Rotate_Enemy_By_X_Amount(float YawAdder)
 	}
 
 	//Set the enemy speed by getting the average speed of the enemy and times it by the magnitude of your rotation
-	float EnemySpeed = (0.4f) * (YawAdder / 90.f);
+	float TempSpeed = (EnemySpeed) * (YawAdder / 90.f);
 
 	//If inputted negative yaw for going left, make sure to make the enemy speed positive again to not have instant speed
 	//for lerp
-	if (EnemySpeed < 0.f) 
+	if (TempSpeed < 0.f)
 	{
-		EnemySpeed *= -1;
+		TempSpeed *= -1;
 	}
 
 	//Forward declare the batch packet
@@ -215,7 +247,7 @@ void AEnemyAIController::Notify_Rotate_Enemy_By_X_Amount(float YawAdder)
 		};
 
 	BatchPacketToSend.Set_Batch_Packet(ControlledPawn, true, 0.f, 0.f, WorldYaw, 0.f, 0.f, AddedWorldYaw,
-		EnemySpeed, TempFunctionWrapper);
+		TempSpeed, TempFunctionWrapper);
 
 	//Then send off to the AI manager to execute the rotation (With a batch if other AI have sent their events)
 	myDungeonState->Notify_AI_Manager_Patrol_Batch(BatchPacketToSend);

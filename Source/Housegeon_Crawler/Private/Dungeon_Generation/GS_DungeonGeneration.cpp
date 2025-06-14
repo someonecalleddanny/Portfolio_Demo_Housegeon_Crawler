@@ -182,6 +182,23 @@ bool AGS_DungeonGeneration::Can_Move_Forward(int StartX, int StartY, float Curre
 
 void AGS_DungeonGeneration::Moving_Forward(int& StartX, int& StartY, float CurrentYaw)
 {
+    //I know that this function is going to be used with canmoveforward function that checks if the indices
+    //are valid but I will check again in case I forget or something etc etc.
+    if (!NavigationGrid.IsValidIndex(StartX)) 
+    {
+        UE_LOG(LogTemp, Error, TEXT("GS: Inputted startx index is not valid for navigation grid"));
+        return;
+    }
+    if (!NavigationGrid[StartX].IsValidIndex(StartY)) 
+    {
+        UE_LOG(LogTemp, Error, TEXT("GS: Inputted starty index is not valid for navigation grid"));
+        return;
+    }
+
+    //Since you are going to move forward, make the previous cell movable which is the StartX/Y before being
+    //changed in this function
+    NavigationGrid[StartX][StartY] = true;
+
     // Check for "up" movement (yaw = 0)
     if (FMath::IsNearlyEqual(CurrentYaw, 0.0f, 10.f))
     {
