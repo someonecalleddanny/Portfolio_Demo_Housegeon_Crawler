@@ -195,9 +195,24 @@ void AEnemyAIController::Move_Forward()
 			float RandomAdderYaw = PossibleAdderYaws[RandIndex];
 			PossibleAdderYaws.RemoveAt(RandIndex);
 
+			float PotentialYaw = RandomAdderYaw + NormalizedYaw;
+			float ErrorTolerance = 0.5f;
+
+			//Wrap the potential yaw to only have a value of 0 - 360 (- error tolerance) Could use FMod but I really want
+			//to aggressively make this as optimised as possible, I like saving the small overhead of not using the FMath
+			//class
+			if (PotentialYaw >= 360.f - ErrorTolerance) 
+			{
+				PotentialYaw -= 360.f;
+			}
+			else if (PotentialYaw <= 0.f - ErrorTolerance)
+			{
+				PotentialYaw += 360.f;
+			}
+
 			//If I found a suitable location in which I can move forward to, call the rotate adder event which
 			//batches the rotation for the ai manager to rotate the enemy
-			if(myDungeonState->Can_Move_Forward(CurrentXY.X, CurrentXY.Y, RandomAdderYaw))
+			if(myDungeonState->Can_Move_Forward(CurrentXY.X, CurrentXY.Y, PotentialYaw))
 			{
 				//Change the current ai state to rotatedtomoveforward, because on finish it will call this move forward
 				//function again to check if the enemy can move forward
@@ -211,19 +226,23 @@ void AEnemyAIController::Move_Forward()
 		UE_LOG(LogTemp, Warning, TEXT("Enemy Is boxed in, going to just stay still for this tick cycle!"));
 	}
 
+	//Bind your onfinished function
 	TFunction<void()> TempFunctionWrapper = [this]()
 		{
 			OnFinished();
 		};
 
+	//Create the end location for the lerp (Don't really need to set z but better to be safer than sorry if Unreal does
+	//Unreal things to uninitted variables
 	EndLocation.X = CurrentXY.X * 400.f;
 	EndLocation.Y = CurrentXY.Y * 400.f;
 	EndLocation.Z = StartLocation.Z;
 
+	//Create the batch packet
 	BatchPacketToSend.Set_Batch_Packet(ControlledPawn, false, StartLocation.X, StartLocation.Y, StartLocation.Z,
 		EndLocation.X, EndLocation.Y, EndLocation.Z, EnemyWalkingSpeed, TempFunctionWrapper);
 
-
+	//Notify the ai manager through the GS
 	myDungeonState->Notify_AI_Manager_Patrol_Batch(BatchPacketToSend);
 }
 
@@ -251,7 +270,7 @@ void AEnemyAIController::Notify_Rotate_Enemy_By_X_Amount(float YawAdder)
 	{
 		NormalizedYaw -= 360.f;
 	}
-	else if (NormalizedYaw <= 0.f + Error_Tolerance)
+	else if (NormalizedYaw <= 0.f - Error_Tolerance)
 	{
 		NormalizedYaw += 360.f;
 	}

@@ -135,9 +135,9 @@ bool AGS_DungeonGeneration::Can_Move_Forward(int StartX, int StartY, float Curre
     if (!(NavigationGrid.IsValidIndex(StartX))) return false;
     if (!(NavigationGrid[StartX].IsValidIndex(StartY))) return false;
 
-    UE_LOG(LogTemp, Warning, TEXT("Trying to move forward current rotation is %f"), CurrentYaw);
-    UE_LOG(LogTemp, Warning, TEXT("Current X =  %d"), StartX);
-    UE_LOG(LogTemp, Warning, TEXT("Current Y =  %d"), StartY);
+    //UE_LOG(LogTemp, Warning, TEXT("Trying to move forward current rotation is %f"), CurrentYaw);
+    //UE_LOG(LogTemp, Warning, TEXT("Current X =  %d"), StartX);
+    //UE_LOG(LogTemp, Warning, TEXT("Current Y =  %d"), StartY);
 
 
     // Check for "up" movement (yaw = 0)
