@@ -5,6 +5,7 @@
 
 #include "Dungeon_Generation/GS_DungeonGeneration.h"
 #include "Managers/AI_Manager.h"
+#include "Kismet/GameplayStatics.h"
 
 void AHousegeon_Game_Base::StartPlay()
 {
@@ -1838,15 +1839,21 @@ void AHousegeon_Game_Base::Dungeon_Logic_Finished()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Found the dungeon generation game state!"));
 
+		//This has the delegate which basically is my custom begin play for every important class to listen to
 		DungeonGameState->Set_Dungeon_Grid_Info(DungeonGridInfo, Temp_NavigationGrid);
 
 		//Spawn the enemies randomly around the walkable areas of the dungeon
 		Spawn_Enemies(SpawnLocationsForEnemies);
 
+		//Delete the old ai manager, and then create the new one
+		Delete_Actors_For_Start_Generation(AAI_Manager::StaticClass());
 		//Then Spawn the AI manager class which handles the batching for enemies and pass it to the GS
 		FTransform TempTransform;
 		AAI_Manager* ManagerToMoveToGS = GetWorld()->SpawnActor<AAI_Manager>(AAI_Manager::StaticClass(), TempTransform);
 
+		//Not only do you pass the ai manager but setting it calls a delegate broadcast for all the spawned enemies
+		//which will essentially start the AI for the ai controller as they listen to this broadcast (The enemies where
+		//Spawned above this function which means the delegate will be heard!)
 		DungeonGameState->Set_AI_Manager(ManagerToMoveToGS, AmountOfEnemiesToSpawn);
 	}
 	else 
@@ -1921,6 +1928,24 @@ void AHousegeon_Game_Base::Spawn_Enemies(TArray<FIntPoint>  SpawnLocationsForEne
 
 		//With everything being picked, now spawn the actor at the location
 		GetWorld()->SpawnActor<AEnemy>(EnemyClassToSpawn, SpawnTransform);
+	}
+}
+
+void AHousegeon_Game_Base::Delete_Actors_For_Start_Generation(TSubclassOf<AActor> ActorClassToDestroy)
+{
+	TArray<AActor*> FoundActors;
+
+	//Get all of the actors that derive from the inputted actor class, The idea is that when the level is regenerated,
+	//...All of the previous  actors will have to be detroyed and made a new, It is also assumed that the parent is inputted
+	//Such as AEnemy to delete all possible children from AEnemy in the level
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ActorClassToDestroy, FoundActors);
+
+	for (AActor* Actor : FoundActors)
+	{
+		if (Actor)
+		{
+			Actor->Destroy();
+		}
 	}
 }
 

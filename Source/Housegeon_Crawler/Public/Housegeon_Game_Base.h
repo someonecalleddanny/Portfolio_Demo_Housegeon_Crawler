@@ -154,6 +154,8 @@ private:
 
 	void Spawn_Enemies(TArray<FIntPoint>  SpawnLocationsForEnemies);
 
+	void Delete_Actors_For_Start_Generation(TSubclassOf<AActor> ActorClassToDestroy);
+
 	/*
 		Retrieve the enemy arrays, I use individual Tarrays for each level because BP does not support nested containers
 		so this is a bandaid solution to give designers more freedom when moving around enemies to spawn for each level
