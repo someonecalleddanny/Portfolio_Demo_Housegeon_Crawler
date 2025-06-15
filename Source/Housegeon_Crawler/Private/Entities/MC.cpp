@@ -21,9 +21,13 @@ AMC::AMC()
 
 	myCamera->SetRelativeLocation(FVector(0.f, 0.f, Camera_Z));
 
+	RightArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("myRightArm"));
+	RightArm->SetupAttachment(myCapsule);
+
 	MovementTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("MoveForwardTimelineComponent"));
 	Rotate90Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Rotate90TimelineComponent"));
 	Rotate180Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Rotate180TimelineComponent"));
+	RightHandAnimationTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("MyRHAnimationComponent"));
 	Tags.Add("MC");
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
@@ -58,7 +62,7 @@ void AMC::BeginPlay()
 		Subsystem->AddMappingContext(myMappingContext, 0);
 	}
 
-	if (MovementTimeline && Rotate90Timeline && Rotate180Timeline)
+	if (MovementTimeline && Rotate90Timeline && Rotate180Timeline && RightHandAnimationTimeline)
 	{
 		//Add the move forward timeline logic, Called when W key is pressed
 		MovementInterp.BindUFunction(this, FName("OnMovementTimelineTick"));
@@ -87,6 +91,17 @@ void AMC::BeginPlay()
 		Rotate180Timeline->SetTimelineFinishedFunc(Rotate180Finished);
 
 		Rotate180Timeline->SetPlayRate(Rotate180PlayRate);
+
+		//Do the same for Right Hand Animations
+		RightHandMeshMovementInterp.BindUFunction(this, FName("OnRightHandMeshMovementTimelineTick"));
+		RightHandMeshMovementFinished.BindUFunction(this, FName("OnRightHandMeshMovementTimelineFinished"));
+
+		RightHandAnimationTimeline->AddInterpFloat(MovementFloatCurve, Rotate180Interp);
+		RightHandAnimationTimeline->SetTimelineFinishedFunc(Rotate180Finished);
+
+		RightHandAnimationTimeline->SetPlayRate(1.f);
+
+
 	}
 	else 
 	{
@@ -169,6 +184,14 @@ void AMC::OnRotate180TimelineTick(float Alpha)
 void AMC::OnRotate180TimelineFinished()
 {
 	bAbleToMove = true;
+}
+
+void AMC::OnRightHandMeshMovementTimelineTick(float Alpha)
+{
+}
+
+void AMC::OnRightHandMeshMovementTimelineFinished()
+{
 }
 
 void AMC::Manual_MoveForward()
@@ -434,6 +457,10 @@ void AMC::Interacted(const FInputActionValue& Value)
 	}
 }
 
+void AMC::RightAttack(const FInputActionValue& Value)
+{
+}
+
 // Called every frame
 void AMC::Tick(float DeltaTime)
 {
@@ -452,6 +479,7 @@ void AMC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		AddInputAction->BindAction(IA_RotateLeftRight, ETriggerEvent::Triggered, this, &AMC::RotateLeftRight);
 		AddInputAction->BindAction(IA_RotateLeftRight180, ETriggerEvent::Triggered, this, &AMC::Rotate180);
 		AddInputAction->BindAction(IA_Interacted, ETriggerEvent::Triggered, this, &AMC::Interacted);
+		AddInputAction->BindAction(IA_RightAttack, ETriggerEvent::Triggered, this, &AMC::RightAttack);
 	}
 }
 

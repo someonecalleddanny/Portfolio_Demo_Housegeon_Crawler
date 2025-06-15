@@ -17,6 +17,7 @@
 
 #include "Camera/CameraComponent.h" 
 #include "Components/CapsuleComponent.h"
+#include "Components/StaticMeshComponent.h"
 
 #include "Camera/CameraShakeBase.h"
 
@@ -44,6 +45,8 @@ public:
 	FORCEINLINE UTimelineComponent* GetMyTimeline() const { return MovementTimeline; }
 	FORCEINLINE UTimelineComponent* GetMyRotate90Timeline() const { return Rotate90Timeline; }
 	FORCEINLINE UTimelineComponent* GetMyRotate180Timeline() const { return Rotate180Timeline; }
+	FORCEINLINE UTimelineComponent* GetMyRightHandAnimationTimeline() const { return RightHandAnimationTimeline; }
+	FORCEINLINE UStaticMeshComponent* GetMyRightArm() const { return RightArm; }
 	
 
 protected:
@@ -85,6 +88,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Timeline")
 	float Rotate180PlayRate = 1.f;
 
+	//Timeline event binders
 	UPROPERTY()
 	FOnTimelineFloat MovementInterp;
 
@@ -103,6 +107,12 @@ protected:
 	UPROPERTY()
 	FOnTimelineEvent Rotate180Finished;
 
+	UPROPERTY()
+	FOnTimelineFloat RightHandMeshMovementInterp;
+
+	UPROPERTY()
+	FOnTimelineEvent RightHandMeshMovementFinished;
+
 	UFUNCTION()
 	void OnMovementTimelineTick(float Alpha);
 
@@ -120,6 +130,12 @@ protected:
 
 	UFUNCTION()
 	void OnRotate180TimelineFinished();
+
+	UFUNCTION()
+	void OnRightHandMeshMovementTimelineTick(float Alpha);
+
+	UFUNCTION()
+	void OnRightHandMeshMovementTimelineFinished();
 
 	/*
 		Might be confusing why there are 3 different move forwards, but this is the one that actually moves forward.
@@ -158,10 +174,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
 	UInputAction* IA_Interacted;
 
+	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
+	UInputAction* IA_RightAttack;
+
 	void MoveForward(const FInputActionValue& Value);
 	void RotateLeftRight(const FInputActionValue& Value);
 	void Rotate180(const FInputActionValue& Value);
 	void Interacted(const FInputActionValue& Value);
+	void RightAttack(const FInputActionValue& Value);
 
 public:	
 	// Called every frame
@@ -184,6 +204,9 @@ private:
 	UCapsuleComponent* myCapsule;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* RightArm;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
 	UTimelineComponent* MovementTimeline;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
@@ -191,6 +214,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
 	UTimelineComponent* Rotate180Timeline;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
+	UTimelineComponent* RightHandAnimationTimeline;
 
 	//Timeline Variables
 	FVector MoveForwardStartLocation;
