@@ -21,6 +21,8 @@
 
 #include "Camera/CameraShakeBase.h"
 
+#include "Combat/FWeaponAnimationInfo.h"
+
 #include "MC.generated.h"
 
 
@@ -29,6 +31,13 @@ struct NormalizedGridTransform
 	int X = 0;
 	int Y = 0;
 	float NormalizedYaw = 0.f;
+};
+
+enum EWeaponAnimationState
+{
+	AtoB,
+	BtoC,
+	CtoA
 };
 
 UCLASS()
@@ -183,6 +192,17 @@ protected:
 	void Interacted(const FInputActionValue& Value);
 	void RightAttack(const FInputActionValue& Value);
 
+	/*
+		All the attack animation logic. As I add more weapons with different attack animations, I will move this into a
+		Database, but first I need to debug all of the animations to see which looks the coolest before reading from a 
+		database
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack Animations")
+	FTransform RightHandStartTransform;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack Animations")
+	TArray<FWeaponAnimationInfo> RightHandAttackAnimations;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -191,6 +211,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+
+	EWeaponAnimationState CurrentRightHandWeaponAnimationState;
+	bool bRightHandIsAttacking = false;
+	FTransform Temp_StartRightHandTransform;
+	FTransform Temp_EndRightHandTransform;
+	int CurrentWeaponAnimIndex = 0;
 
 	//Player Grid Movement
 	FIntPoint OldCell;
@@ -217,6 +243,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
 	UTimelineComponent* RightHandAnimationTimeline;
+
+	void SetRightHandAnimationPlayRate(float InTime);
+
+	void PlayRightHandAnimation(EWeaponAnimationState AnimationToPlay, int WeaponAnimationIndex);
 
 	//Timeline Variables
 	FVector MoveForwardStartLocation;

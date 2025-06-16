@@ -459,6 +459,26 @@ void AMC::Interacted(const FInputActionValue& Value)
 
 void AMC::RightAttack(const FInputActionValue& Value)
 {
+	UE_LOG(LogTemp, Display, TEXT("Right Attack Pressed!"));
+	if (!bRightHandIsAttacking) 
+	{
+		//Have a bool that stops the left click from interuppting the lerp anim whilst it's mid way
+		//(Will be able to left click on the CtoA weapon state though!!!) -> For cool gameplay reasons...
+		bRightHandIsAttacking = true;
+
+		//Choose a random attack animation to play
+		int RandIndex = FMath::RandRange(0, RightHandAttackAnimations.Num() - 1);
+		//Debug
+		RandIndex = 0;
+
+		//Have a global index for the current weapon anim because this will be used at the onfinished for the right hand
+		//timeline to pick the next weapon anim state
+		CurrentWeaponAnimIndex = RandIndex;
+
+		//Use a helper function that decides the complicated logic for what each AI animation state should do for the
+		//timeline (The currentweaponanimindex will be checked to see if it fits in the weapon anim array!!!)
+		PlayRightHandAnimation(EWeaponAnimationState::AtoB, CurrentWeaponAnimIndex);
+	}
 }
 
 // Called every frame
@@ -523,5 +543,81 @@ void AMC::SetRandomSpawnRotation()
 	}
 
 	SetActorRotation(FQuat(CustomRotationSpawn));
+}
+
+void AMC::SetRightHandAnimationPlayRate(float InTime)
+{
+	RightHandAnimationTimeline->SetPlayRate(1 / InTime);
+}
+
+void AMC::PlayRightHandAnimation(EWeaponAnimationState AnimationToPlay, int WeaponAnimationIndex)
+{
+	//Check if the inputted index for searching the weapon animation transforms etc is valid
+	if (!RightHandAttackAnimations.IsValidIndex(WeaponAnimationIndex)) 
+	{
+		UE_LOG(LogTemp, Error, TEXT("Inputted weapon index (%d) is not valid, check the MC right hand anim array!"),
+			WeaponAnimationIndex);
+		return;
+	}
+
+	//Essentially, when I want to play the right hand weapon animation, I want to reuse the same timeline to reduce overhead
+	//In doing so, I have different states that need to be picked to set the start and end transform for the timeline to
+	//lerp through. Instead of checking each tick for what the current weapon anim state is, I do it before
+	switch (AnimationToPlay) 
+	{
+	case EWeaponAnimationState::AtoB:
+		//Set the start transform to the relative transform of rightarm mesh, do this because I want the attack system
+		//to allow the left click to do the next weapon animation as the weapon is going back to the idle position
+		//This will be during the CtoA state as this will be a slower timeline than the rest
+		Temp_StartRightHandTransform = RightArm->GetRelativeTransform();
+
+		Temp_EndRightHandTransform = RightHandAttackAnimations[WeaponAnimationIndex].BTransform;
+
+		//This is important to set here as I will use this when the timeline is finished to decide what the next animation
+		//will be
+		CurrentRightHandWeaponAnimationState = AnimationToPlay;
+
+		//Set the play rate of the timeline through a function helper to avoid confusion for the timing of the animation
+		SetRightHandAnimationPlayRate(RightHandAttackAnimations[WeaponAnimationIndex].AtoBTime);
+
+		//Now, simply play
+		RightHandAnimationTimeline->PlayFromStart();
+
+		break;
+	
+	//All the other weapon animation states are the same as the above essentially
+	case EWeaponAnimationState::BtoC:
+
+		Temp_StartRightHandTransform = RightHandAttackAnimations[WeaponAnimationIndex].BTransform;
+
+		Temp_EndRightHandTransform = RightHandAttackAnimations[WeaponAnimationIndex].CTransform;
+
+		CurrentRightHandWeaponAnimationState = AnimationToPlay;
+
+		SetRightHandAnimationPlayRate(RightHandAttackAnimations[WeaponAnimationIndex].BtoCTime);
+
+		RightHandAnimationTimeline->PlayFromStart();
+
+		break;
+
+	case EWeaponAnimationState::CtoA:
+
+		Temp_StartRightHandTransform = RightHandAttackAnimations[WeaponAnimationIndex].CTransform;
+
+		//Don't use the right hand attack animation array here but the global variable instead. Do this because
+		//I want to avoid repetition of recreating the same A transform on each new weapon attack animation in BP
+		Temp_EndRightHandTransform = RightHandStartTransform;
+
+		CurrentRightHandWeaponAnimationState = AnimationToPlay;
+
+		SetRightHandAnimationPlayRate(RightHandAttackAnimations[WeaponAnimationIndex].CtoATime);
+
+		RightHandAnimationTimeline->PlayFromStart();
+
+		break;
+
+	default:
+		UE_LOG(LogTemp, Error, TEXT("Something went horribly wrong in MC::PlayRightHandAnimation function!!!"));
+	}
 }
 
