@@ -76,6 +76,7 @@ void AEnemyAIController::Register_Enemy_Location_Cell()
 	/*
 		Will need to transfer to the GS
 	*/
+	myDungeonState->Register_Entity_Cell_Location(CurrentXY);
 }
 
 void AEnemyAIController::SetRandomRotation()

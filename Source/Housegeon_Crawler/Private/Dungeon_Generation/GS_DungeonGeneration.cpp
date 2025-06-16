@@ -68,6 +68,28 @@ void AGS_DungeonGeneration::SetPlayerSpawnInformation(FIntPoint PlayerCellInfo)
     NavigationGrid[CurrentPlayerCoords.X][CurrentPlayerCoords.Y] = false;
 }
 
+void AGS_DungeonGeneration::Register_Entity_Cell_Location(FIntPoint EntityCellInfo)
+{
+    //First check if the inputted cell info is within bounds to avoid crashing
+    if (!(NavigationGrid.IsValidIndex(EntityCellInfo.X)))
+    {
+        UE_LOG(LogTemp, Error, TEXT("The X Spawn Cells where not in range for the navigation grid"));
+        UE_LOG(LogTemp, Error, TEXT("The X Input = %d"), EntityCellInfo.X);
+        UE_LOG(LogTemp, Error, TEXT("Current Navigation Grid Size = %d"), NavigationGrid.Num());
+        return;
+    }
+    else if (!(NavigationGrid[EntityCellInfo.X].IsValidIndex(EntityCellInfo.Y)))
+    {
+        UE_LOG(LogTemp, Error, TEXT("The Y Spawn Cells where not in range for the navigation grid"));
+        return;
+    }
+
+    UE_LOG(LogTemp, Display, TEXT("Registered Entity's cell location!"));
+
+    //Make the area not movable to any other entities
+    NavigationGrid[EntityCellInfo.X][EntityCellInfo.Y] = false;
+}
+
 void AGS_DungeonGeneration::Set_AI_Manager(AAI_Manager* AIManager_PARAM, int MaxSpawnedEntities)
 {
     if (AIManager_PARAM) 

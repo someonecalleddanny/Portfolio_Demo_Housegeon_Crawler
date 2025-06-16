@@ -29,6 +29,8 @@ public:
 	//This function updates the global player coords (Used for AI) as well as setting the cell as not movable onto
 	void SetPlayerSpawnInformation(FIntPoint PlayerCellInfo);
 
+	void Register_Entity_Cell_Location(FIntPoint EntityCellInfo);
+
 	void Set_AI_Manager(AAI_Manager* AIManager_PARAM, int MaxSpawnedEntities);
 
 	void Notify_AI_Manager_Patrol_Batch(FAIManagerBatchPacket BatchPacketToSend);
