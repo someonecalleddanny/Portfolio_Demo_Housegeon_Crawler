@@ -12,7 +12,7 @@ AMC::AMC()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	myCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("PlayerMan"));
-	//myCapsule->SetupAttachment(RootComponent);
+	myCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	RootComponent = myCapsule;
 
@@ -23,6 +23,7 @@ AMC::AMC()
 
 	RightArm = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("myRightArm"));
 	RightArm->SetupAttachment(myCapsule);
+	RightArm->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	MovementTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("MoveForwardTimelineComponent"));
 	Rotate90Timeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("Rotate90TimelineComponent"));
@@ -96,8 +97,8 @@ void AMC::BeginPlay()
 		RightHandMeshMovementInterp.BindUFunction(this, FName("OnRightHandMeshMovementTimelineTick"));
 		RightHandMeshMovementFinished.BindUFunction(this, FName("OnRightHandMeshMovementTimelineFinished"));
 
-		RightHandAnimationTimeline->AddInterpFloat(MovementFloatCurve, Rotate180Interp);
-		RightHandAnimationTimeline->SetTimelineFinishedFunc(Rotate180Finished);
+		RightHandAnimationTimeline->AddInterpFloat(MovementFloatCurve, RightHandMeshMovementInterp);
+		RightHandAnimationTimeline->SetTimelineFinishedFunc(RightHandMeshMovementFinished);
 
 		RightHandAnimationTimeline->SetPlayRate(1.f);
 
@@ -188,10 +189,33 @@ void AMC::OnRotate180TimelineFinished()
 
 void AMC::OnRightHandMeshMovementTimelineTick(float Alpha)
 {
+	FTransform LerpTransform;
+
+	LerpTransform.Blend(Temp_StartRightHandTransform, Temp_EndRightHandTransform, Alpha);
+
+	RightArm->SetRelativeTransform(LerpTransform);
 }
 
 void AMC::OnRightHandMeshMovementTimelineFinished()
 {
+	//So if you are finished with a to b go to b to c
+	if (CurrentRightHandWeaponAnimationState == EWeaponAnimationState::AtoB)
+	{
+		CurrentRightHandWeaponAnimationState = EWeaponAnimationState::BtoC;
+		//Now play the new animation from the new anim state
+		PlayRightHandAnimation(CurrentRightHandWeaponAnimationState, CurrentWeaponAnimIndex);
+	}
+	//if finished with b to c, go from c to a, during this animation it can be overwritten by left click
+	//to play a to b
+	else if (CurrentRightHandWeaponAnimationState == EWeaponAnimationState::BtoC) 
+	{
+		CurrentRightHandWeaponAnimationState = EWeaponAnimationState::CtoA;
+		bRightHandIsAttacking = false;
+		//Now play the new animation from the new anim state
+		PlayRightHandAnimation(CurrentRightHandWeaponAnimationState, CurrentWeaponAnimIndex);
+	}
+	//if finished CtoA I don't want to play anything or do anything as the left click will override everything
+	
 }
 
 void AMC::Manual_MoveForward()
@@ -459,9 +483,9 @@ void AMC::Interacted(const FInputActionValue& Value)
 
 void AMC::RightAttack(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Display, TEXT("Right Attack Pressed!"));
 	if (!bRightHandIsAttacking) 
 	{
+		UE_LOG(LogTemp, Display, TEXT("Right Attack Pressed!"));
 		//Have a bool that stops the left click from interuppting the lerp anim whilst it's mid way
 		//(Will be able to left click on the CtoA weapon state though!!!) -> For cool gameplay reasons...
 		bRightHandIsAttacking = true;
@@ -559,6 +583,8 @@ void AMC::PlayRightHandAnimation(EWeaponAnimationState AnimationToPlay, int Weap
 			WeaponAnimationIndex);
 		return;
 	}
+
+	UE_LOG(LogTemp, Display, TEXT("Going To Play Right Hand Weapon Anim!"));
 
 	//Essentially, when I want to play the right hand weapon animation, I want to reuse the same timeline to reduce overhead
 	//In doing so, I have different states that need to be picked to set the start and end transform for the timeline to
