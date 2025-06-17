@@ -29,6 +29,16 @@ public:
 		TFunction<void()> BindOnFinishedEvent);
 
 	/*
+		This function is called when you need to do AI logic as the batch packet gets popped from the ai manager queue.
+		Unlike, setting the batch packet, I don't need all the other variables apart from the controlled pawn to know that
+		the batch packet struct is indeed valid as it will be set and returned to ai manager from the bound function
+	*/
+	void Set_Delayed_Batch_Packet(TWeakObjectPtr<APawn> ControlledPawnRef_Param, TFunction<FAIManagerBatchPacket()> DelayBatchFunctionBind);
+
+	
+	FORCEINLINE bool Is_A_Delayed_Batch_Packet();
+
+	/*
 		Once you finish the alpha within the centralised tick, set the new alpha for the next tick, this function clamps
 		from 0 to 1 so don't worry for any potential game breaking bugs
 	*/
@@ -48,6 +58,8 @@ public:
 	//Don't need to inline as not called every frame but once when the lerp has finished
 	void Call_OnFinished();
 
+	//Call the delayed function to replace the current batch packet to the batch that needs to be executed when popped
+	FAIManagerBatchPacket Call_OnDelayedFunction();
 private:
 	//So, the enemy can either be rotating or moving to another cell, Instead of making a start/end FVector and FRotator
 	//I thought to create my own struct with 3 floats as the enemy will either be rotating or moving on a lerp which will
@@ -68,4 +80,7 @@ private:
 	// Function to call when finished (bind this from my AIController), Use this because I cannot include the ai controller
 	//as a header within my ai manager as a circular dependency will happen as the GS owns the ai manager and the 
 	TFunction<void()> FunctionWrapperOnFinished;
+
+	TFunction<FAIManagerBatchPacket()> FunctionWrapperDelayedAIBatch;
+	bool bDelayedAIBatch = false;
 };

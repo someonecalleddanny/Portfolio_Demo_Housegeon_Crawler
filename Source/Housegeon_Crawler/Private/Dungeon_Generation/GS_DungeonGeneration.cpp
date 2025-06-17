@@ -104,7 +104,15 @@ void AGS_DungeonGeneration::Set_AI_Manager(AAI_Manager* AIManager_PARAM, int Max
 
 void AGS_DungeonGeneration::Notify_AI_Manager_Patrol_Batch(FAIManagerBatchPacket BatchPacketToSend)
 {
-    myAIManager->Push_Patrol_Function_To_Batch(BatchPacketToSend);
+    if (myAIManager) 
+    {
+        myAIManager->Push_Patrol_Function_To_Batch(BatchPacketToSend);
+    }
+    else 
+    {
+        UE_LOG(LogTemp, Error, TEXT("AI MANAGER NOT INITTED PROPERLY!"));
+    }
+    
 }
 
 void AGS_DungeonGeneration::UpdateOldMovementCell(FIntPoint CellInfo)

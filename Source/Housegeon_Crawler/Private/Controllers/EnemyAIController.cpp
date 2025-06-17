@@ -247,6 +247,23 @@ void AEnemyAIController::Move_Forward()
 	myDungeonState->Notify_AI_Manager_Patrol_Batch(BatchPacketToSend);
 }
 
+void AEnemyAIController::Notify_Delayed_Move_Forward()
+{
+	//Create the struct
+	FAIManagerBatchPacket BatchPacketToSend;
+
+	//Create the functor that binds the OnDelayedMoveForward member function held within this class
+	TFunction<FAIManagerBatchPacket()> BoundDelayedBatchFunction = [this]()
+		{
+			return OnDelayedMoveForward();
+		};
+
+	//Add the created functor to the struct, this will be called when the ai manager first pops the batched struct
+	//which will call the OnDelayedMoveForward function here to instantly call the frame perfect logic that needs to be
+	//called
+	BatchPacketToSend.Set_Delayed_Batch_Packet(ControlledPawn, BoundDelayedBatchFunction);
+}
+
 void AEnemyAIController::Notify_Rotate_Enemy_By_X_Amount(float YawAdder)
 {
 	//Clamp, so I don't get huge added yaws. Does mean that can't have multiple rotations but for now it's fine as I
@@ -318,4 +335,11 @@ void AEnemyAIController::OnFinished()
 		Start_AI();
 	}
 	
+}
+
+FAIManagerBatchPacket AEnemyAIController::OnDelayedMoveForward()
+{
+	FAIManagerBatchPacket BatchPacketToSend;
+
+	return BatchPacketToSend;
 }

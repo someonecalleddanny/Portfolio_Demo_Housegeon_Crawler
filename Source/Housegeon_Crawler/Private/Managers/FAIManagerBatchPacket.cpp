@@ -36,6 +36,28 @@ FAIManagerBatchPacket FAIManagerBatchPacket::Set_Batch_Packet(TWeakObjectPtr<APa
     return *(this);
 }
 
+void FAIManagerBatchPacket::Set_Delayed_Batch_Packet(TWeakObjectPtr<APawn> ControlledPawnRef_Param, TFunction<FAIManagerBatchPacket()> DelayBatchFunctionBind)
+{
+    if (!DelayBatchFunctionBind) 
+    {
+        UE_LOG(LogTemp, Error, TEXT("The bound delayed batch function failed to bind within the Batch Packet struct"));
+        return;
+    }
+    if (!ControlledPawnRef_Param.IsValid()) 
+    {
+        UE_LOG(LogTemp, Error, TEXT("The Controlled Pawn was null for when setting delayed batch packet in batch struct!"));
+        return;
+    }
+
+    ControlledPawnRef = ControlledPawnRef_Param;
+    FunctionWrapperDelayedAIBatch = DelayBatchFunctionBind;
+}
+
+bool FAIManagerBatchPacket::Is_A_Delayed_Batch_Packet()
+{
+    return bDelayedAIBatch;
+}
+
 void FAIManagerBatchPacket::Set_Alpha(float Alpha)
 {
     CurrentAlpha = FMath::Clamp(Alpha, 0.f, 1.f);
@@ -79,6 +101,25 @@ void FAIManagerBatchPacket::Call_OnFinished()
     }
     else 
     {
-        UE_LOG(LogTemp, Error, TEXT("Function wrapper invalid!"));
+        UE_LOG(LogTemp, Error, TEXT("On finished wrapper invalid within created struct!"));
+    }
+}
+
+//Looks confusing, but you are essentially overwriting the current struct to a new batch struct that needs logic to be done
+//right away rather than waiting in the queue to execute
+FAIManagerBatchPacket FAIManagerBatchPacket::Call_OnDelayedFunction()
+{
+    if (FunctionWrapperDelayedAIBatch)
+    {
+        //So the function wrapper should do its logic and return the new updated batch packet to be done on the first
+        //frame of the centralised tick to execute
+        return FunctionWrapperDelayedAIBatch();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("On delayed wrapper invalid within created struct!"));
+        //To not crash anything, just return the current batched item, will cause logical errors within the ai manager but
+        //will still run
+        return *(this);
     }
 }

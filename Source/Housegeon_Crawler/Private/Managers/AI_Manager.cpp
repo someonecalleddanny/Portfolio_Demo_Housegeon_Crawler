@@ -9,6 +9,9 @@ AAI_Manager::AAI_Manager()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	//Jesus Christ Almighty, simply throttling the actor tick is a game changer for performance. This single line of code
+	//gained me 10 fps which is absolutely crazy to think about. 110fps to 120 consistent. Mad
+	PrimaryActorTick.TickInterval = 1.f / 45.f;
 }
 
 void AAI_Manager::Set_Max_Entity_Count(int Amount)
@@ -65,19 +68,30 @@ FAIManagerBatchPacket AAI_Manager::Pop_Patrol_Queue_Container()
 {
 	FAIManagerBatchPacket ReturnedPacket;
 
-	//Check if the pawn controlled is valid, a major checker as a lerp would not function without it
-	if (QueuePatrolBatcher[PatrolHead].Get_Pawn().IsValid())
+	//So, if the current head is empty, don't increment or anything, just return a null ai packet
+	if (!QueuePatrolBatcher[PatrolHead].Get_Pawn().IsValid()) 
 	{
-		//UE_LOG(LogTemp, Display, TEXT("Pop valid for ai batch packet"));
-
-		//Set the returned packet to what is at the current head and then increment the head (allowing for wrapping)
-		ReturnedPacket = QueuePatrolBatcher[PatrolHead];
-
-		FAIManagerBatchPacket UnInitPacket;
-		QueuePatrolBatcher[PatrolHead] =  UnInitPacket;
-
-		PatrolHead = (PatrolHead + 1) % QueuePatrolBatcher.Num();
+		UE_LOG(LogTemp, Warning, TEXT("The patrol queue batcher in the ai manager is empty, awaiting new commands!"));
 		return ReturnedPacket;
+	}
+
+	//UE_LOG(LogTemp, Display, TEXT("Pop valid for ai batch packet"));
+
+	//Set the returned packet to what is at the current head of the queue
+	ReturnedPacket = QueuePatrolBatcher[PatrolHead];
+
+	//Then replace the current head index with a null batch struct to mark it as "undirty"
+	FAIManagerBatchPacket UnInitPacket;
+	QueuePatrolBatcher[PatrolHead] = UnInitPacket;
+
+	//Then increment the Patrol Head for the next pop (allowing for wrapping around the queue container)
+	PatrolHead = (PatrolHead + 1) % QueuePatrolBatcher.Num();
+
+	//A bit more technical here, some events need to be called as they are popped as they need frame perfect execution,
+	//This is where the batch packet gets overwritten by what actually needs to be executed
+	if (ReturnedPacket.Is_A_Delayed_Batch_Packet()) 
+	{
+		ReturnedPacket = ReturnedPacket.Call_OnDelayedFunction();
 	}
 
 	//if there is nothing at the head to pop, means that the queue is empty
