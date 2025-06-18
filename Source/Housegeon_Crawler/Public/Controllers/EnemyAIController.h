@@ -56,16 +56,11 @@ private:
 	float NormalizedYaw = 0.f;
 	float EnemyRotationSpeed = 0.4f;
 	float EnemyWalkingSpeed = 1.f;
+	float RotationErrorTolerance = 0.5f;
+	FAIManagerBatchPacket BatchPacketToSend;
+	TFunction<void()> CurrentBoundOnFinishedFunction;
 
 	void SetRandomRotation();
-
-	//AI State Functions
-	TMap<ECurrent_AI_State, void (AEnemyAIController::*)()> myAIStates =
-	{
-		{ECurrent_AI_State::RandomPatrolMovementSelector, &AEnemyAIController::Choose_Random_Patrol},
-		{ECurrent_AI_State::MoveForward, &AEnemyAIController::Move_Forward}
-	};
-
 
 	FTimerHandle TH_NextAIEvent;
 	ECurrent_AI_State MyCurrentAIState = ECurrent_AI_State::CheckPlayer;
@@ -75,13 +70,15 @@ private:
 
 	void Choose_Random_Patrol();
 
-	void Move_Forward();
-
 	void Notify_Delayed_Move_Forward();
 
 	//Add the rotation you want the pawn to go by and notify the ai controller (clamped to -360 to 360 for the Yaw adder)
-	void Notify_Rotate_Enemy_By_X_Amount(float YawAdder);
+	FAIManagerBatchPacket Rotate_Enemy_By_X_Amount(float YawAdder, bool bNotifyBatch);
 
 	void OnFinished();
 	FAIManagerBatchPacket OnDelayedMoveForward();
+
+	//Array for trying to move what yaw the player can move forward from (Used in function below)
+	const TArray<float> PossibleAdderYawsToMoveForward = { 90.f, 180.f, -90.f };
+	FAIManagerBatchPacket Rotate_To_Be_Able_To_Move_Forward();
 };

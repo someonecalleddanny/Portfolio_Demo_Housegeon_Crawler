@@ -3,7 +3,9 @@
 
 #include "Managers/FAIManagerBatchPacket.h"
 
-FAIManagerBatchPacket FAIManagerBatchPacket::Set_Batch_Packet(TWeakObjectPtr<APawn> ControlledPawnRef_Param, bool bIsRotating_Param, float AX, float AY, float AZ, float BX, float BY, float BZ, float TimeToFinishEvent, TFunction<void()> BindOnFinishedEvent)
+FAIManagerBatchPacket FAIManagerBatchPacket::Set_Batch_Packet(TWeakObjectPtr<APawn> ControlledPawnRef_Param,
+    bool bIsRotating_Param, float AX, float AY, float AZ,
+    float BX, float BY, float BZ, float TimeToFinishEvent, TFunction<void()> BindOnFinishedEvent)
 {
     if (!(ControlledPawnRef_Param.IsValid()))
     {
@@ -51,11 +53,25 @@ void FAIManagerBatchPacket::Set_Delayed_Batch_Packet(TWeakObjectPtr<APawn> Contr
 
     ControlledPawnRef = ControlledPawnRef_Param;
     FunctionWrapperDelayedAIBatch = DelayBatchFunctionBind;
+
+    TimeToFinish = 0.5f;
+}
+
+void FAIManagerBatchPacket::Finished_OnDelayed_Function()
+{
+    FunctionWrapperDelayedAIBatch.Reset();
 }
 
 bool FAIManagerBatchPacket::Is_A_Delayed_Batch_Packet()
 {
-    return bDelayedAIBatch;
+    if (FunctionWrapperDelayedAIBatch) 
+    {
+        return true;
+    }
+    else 
+    {
+        return false;
+    }
 }
 
 void FAIManagerBatchPacket::Set_Alpha(float Alpha)

@@ -33,7 +33,10 @@ public:
 		Unlike, setting the batch packet, I don't need all the other variables apart from the controlled pawn to know that
 		the batch packet struct is indeed valid as it will be set and returned to ai manager from the bound function
 	*/
-	void Set_Delayed_Batch_Packet(TWeakObjectPtr<APawn> ControlledPawnRef_Param, TFunction<FAIManagerBatchPacket()> DelayBatchFunctionBind);
+	void Set_Delayed_Batch_Packet(TWeakObjectPtr<APawn> ControlledPawnRef_Param,
+		TFunction<FAIManagerBatchPacket()> DelayBatchFunctionBind);
+
+	FORCEINLINE void Finished_OnDelayed_Function();
 
 	
 	FORCEINLINE bool Is_A_Delayed_Batch_Packet();
@@ -82,5 +85,4 @@ private:
 	TFunction<void()> FunctionWrapperOnFinished;
 
 	TFunction<FAIManagerBatchPacket()> FunctionWrapperDelayedAIBatch;
-	bool bDelayedAIBatch = false;
 };
