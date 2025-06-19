@@ -1913,6 +1913,12 @@ void AHousegeon_Game_Base::Spawn_Enemies(TArray<FIntPoint>  SpawnLocationsForEne
 		//Then remove the spawn location from the array so no other enemy can spawn in the same location
 		SpawnLocationsForEnemies.RemoveAt(RandIndex);
 
+		if (SpawnLocationsForEnemies.IsEmpty()) 
+		{
+			UE_LOG(LogTemp, Warning, TEXT("The Dungeon Is Too small to spawn every enemy set!"));
+			break;
+		}
+
 		//Now randomally choose which enemy to spawn in the location by picking a random index from the enemy spawn array
 		//(Reusing the RandIndex variable)
 		RandIndex = FMath::RandRange(0, LevelSpecificEnemiesToSpawn.Num() - 1);
