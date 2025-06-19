@@ -97,7 +97,7 @@ void AMC::BeginPlay()
 		RightHandMeshMovementInterp.BindUFunction(this, FName("OnRightHandMeshMovementTimelineTick"));
 		RightHandMeshMovementFinished.BindUFunction(this, FName("OnRightHandMeshMovementTimelineFinished"));
 
-		RightHandAnimationTimeline->AddInterpFloat(MovementFloatCurve, RightHandMeshMovementInterp);
+		RightHandAnimationTimeline->AddInterpFloat(RightHandAttackCurve, RightHandMeshMovementInterp);
 		RightHandAnimationTimeline->SetTimelineFinishedFunc(RightHandMeshMovementFinished);
 
 		RightHandAnimationTimeline->SetPlayRate(1.f);
@@ -189,6 +189,15 @@ void AMC::OnRightHandMeshMovementTimelineTick(float Alpha)
 	FTransform LerpTransform;
 
 	LerpTransform.Blend(Temp_StartRightHandTransform, Temp_EndRightHandTransform, Alpha);
+
+	if (CurrentRightHandWeaponAnimationState == EWeaponAnimationState::BtoC 
+		&& Alpha >= 0.6f && !bRightHandHit) 
+	{
+		//UE_LOG(LogTemp, Display, TEXT("Hitting Enemy!"));
+		bRightHandHit = true;
+		//Check if an enemy is one cell forward and damage it
+		Attack_One_Cell_Forward();
+	}
 
 	RightArm->SetRelativeTransform(LerpTransform);
 }
@@ -442,6 +451,7 @@ void AMC::RightAttack(const FInputActionValue& Value)
 		//Have a bool that stops the left click from interuppting the lerp anim whilst it's mid way
 		//(Will be able to left click on the CtoA weapon state though!!!) -> For cool gameplay reasons...
 		bRightHandIsAttacking = true;
+		bRightHandHit = false;
 
 		//Choose a random attack animation to play
 		int RandIndex = FMath::RandRange(0, RightHandAttackAnimations.Num() - 1);
@@ -455,8 +465,6 @@ void AMC::RightAttack(const FInputActionValue& Value)
 		//Use a helper function that decides the complicated logic for what each AI animation state should do for the
 		//timeline (The currentweaponanimindex will be checked to see if it fits in the weapon anim array!!!)
 		PlayRightHandAnimation(EWeaponAnimationState::AtoB, CurrentWeaponAnimIndex);
-
-		Attack_One_Cell_Forward();
 	}
 }
 
@@ -570,6 +578,8 @@ void AMC::PlayRightHandAnimation(EWeaponAnimationState AnimationToPlay, int Weap
 
 	UE_LOG(LogTemp, Display, TEXT("Going To Play Right Hand Weapon Anim!"));
 
+	float AttackTime;
+
 	//Essentially, when I want to play the right hand weapon animation, I want to reuse the same timeline to reduce overhead
 	//In doing so, I have different states that need to be picked to set the start and end transform for the timeline to
 	//lerp through. Instead of checking each tick for what the current weapon anim state is, I do it before
@@ -587,8 +597,15 @@ void AMC::PlayRightHandAnimation(EWeaponAnimationState AnimationToPlay, int Weap
 		//will be
 		CurrentRightHandWeaponAnimationState = AnimationToPlay;
 
+		AttackTime = RightHandAttackAnimations[WeaponAnimationIndex].AtoBTime;
+		if (RightHandAnimationTimeline->IsPlaying()) 
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Sword Playing Animation Currently, Slowing Down!"));
+			AttackTime *= 2.f;
+		}
+
 		//Set the play rate of the timeline through a function helper to avoid confusion for the timing of the animation
-		SetRightHandAnimationPlayRate(RightHandAttackAnimations[WeaponAnimationIndex].AtoBTime);
+		SetRightHandAnimationPlayRate(AttackTime);
 
 		//Now, simply play
 		RightHandAnimationTimeline->PlayFromStart();
@@ -612,17 +629,17 @@ void AMC::PlayRightHandAnimation(EWeaponAnimationState AnimationToPlay, int Weap
 
 	case EWeaponAnimationState::CtoA:
 
-		Temp_StartRightHandTransform = RightHandAttackAnimations[WeaponAnimationIndex].CTransform;
+		Temp_StartRightHandTransform = RightHandStartTransform;
 
 		//Don't use the right hand attack animation array here but the global variable instead. Do this because
 		//I want to avoid repetition of recreating the same A transform on each new weapon attack animation in BP
-		Temp_EndRightHandTransform = RightHandStartTransform;
+		Temp_EndRightHandTransform = RightHandAttackAnimations[WeaponAnimationIndex].CTransform;;
 
 		CurrentRightHandWeaponAnimationState = AnimationToPlay;
 
 		SetRightHandAnimationPlayRate(RightHandAttackAnimations[WeaponAnimationIndex].CtoATime);
 
-		RightHandAnimationTimeline->PlayFromStart();
+		RightHandAnimationTimeline->ReverseFromEnd();
 
 		break;
 

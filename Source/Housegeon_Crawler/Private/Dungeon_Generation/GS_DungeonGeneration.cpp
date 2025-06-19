@@ -298,23 +298,25 @@ void AGS_DungeonGeneration::Try_Sending_Damage_To_Entity(TArray<FIntPoint> Damag
     //even if it is one cell in front, so I want to reuse this function for new attack patterns that I will create in the
     //future.
     for (FIntPoint DamageCell : DamageCells) 
-    {
-        //See if you can dereference the found damage cell, if not continue to the next for loop iteration
-        if (!EntityCoords.Find(DamageCell)) continue;
-        
-        AActor* DamageEntity = *(EntityCoords.Find(DamageCell));
+    {        
+        AActor** DamageEntity = EntityCoords.Find(DamageCell);
 
-        if (DamageEntity) 
-        {
-            UE_LOG(LogTemp, Display, TEXT("Sending damage to enemy!"));
-       
-            IEnemyPawnComms* PawnComms = Cast<IEnemyPawnComms>(DamageEntity);
+        //Check if the entity is at coords, if not continue because will need to deref pointer below
+        if (!DamageEntity) continue;
 
-            if (!PawnComms) continue;
+        AActor* DePointeredDamageEntity = *(DamageEntity);
 
-            //This will most likely be sent to the enemy pawn class
-            PawnComms->Send_Damage(Damage);
-        }
+        //Now check if there is a valid pawn within the cell location
+        if (!DePointeredDamageEntity) continue;
+
+        UE_LOG(LogTemp, Display, TEXT("Sending damage to enemy!"));
+
+        IEnemyPawnComms* PawnComms = Cast<IEnemyPawnComms>(DePointeredDamageEntity);
+
+        if (!PawnComms) continue;
+
+        //This will most likely be sent to the enemy pawn class
+        PawnComms->Send_Damage(Damage);
     }
 }
 

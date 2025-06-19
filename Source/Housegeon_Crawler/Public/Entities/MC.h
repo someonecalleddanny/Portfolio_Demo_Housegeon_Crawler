@@ -192,6 +192,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack Animations")
 	TArray<FWeaponAnimationInfo> RightHandAttackAnimations;
 
+	UPROPERTY(EditAnywhere, Category = "Attack Animations")
+	UCurveFloat* RightHandAttackCurve;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -207,6 +210,7 @@ private:
 	FTransform Temp_StartRightHandTransform;
 	FTransform Temp_EndRightHandTransform;
 	int CurrentWeaponAnimIndex = 0;
+	bool bRightHandHit = false;
 
 	void Attack_One_Cell_Forward();
 
