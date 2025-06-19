@@ -190,6 +190,7 @@ void AMC::OnRightHandMeshMovementTimelineTick(float Alpha)
 
 	LerpTransform.Blend(Temp_StartRightHandTransform, Temp_EndRightHandTransform, Alpha);
 
+	//Send the attack message around the mid swing of the main swipe animation
 	if (CurrentRightHandWeaponAnimationState == EWeaponAnimationState::BtoC 
 		&& Alpha >= 0.6f && !bRightHandHit) 
 	{
@@ -221,7 +222,12 @@ void AMC::OnRightHandMeshMovementTimelineFinished()
 		PlayRightHandAnimation(CurrentRightHandWeaponAnimationState, CurrentWeaponAnimIndex);
 	}
 	//if finished CtoA I don't want to play anything or do anything as the left click will override everything
-	
+	else if (CurrentRightHandWeaponAnimationState == EWeaponAnimationState::CtoA)
+	{
+		//This bool will be used to select a random start index on the next attack if player does not try
+		//to combo
+		bFullyCompletedRightHand = true;
+	}
 }
 
 void AMC::Manual_MoveForward()
@@ -453,14 +459,25 @@ void AMC::RightAttack(const FInputActionValue& Value)
 		bRightHandIsAttacking = true;
 		bRightHandHit = false;
 
-		//Choose a random attack animation to play
-		int RandIndex = FMath::RandRange(0, RightHandAttackAnimations.Num() - 1);
-		//Debug
-		RandIndex = 0;
+		//If fully completed a combo, randomly have the start index be somewhere within the available animations
+		if (bFullyCompletedRightHand) 
+		{
+			//Turn to false, as I want the ctoa event to finish to reset this to true
+			bFullyCompletedRightHand = false;
+			//Choose a random attack animation to play
+			int RandIndex = FMath::RandRange(0, RightHandAttackAnimations.Num() - 1);
+			//- by the index because you add the CurrentWeaponIndex below
+			CurrentWeaponAnimIndex = RandIndex;
+			//Debug
+			//RandIndex = 1;
+		}
 
 		//Have a global index for the current weapon anim because this will be used at the onfinished for the right hand
 		//timeline to pick the next weapon anim state
-		CurrentWeaponAnimIndex = RandIndex;
+		//CurrentWeaponAnimIndex = RandIndex;
+		CurrentWeaponAnimIndex = (CurrentWeaponAnimIndex + 1) % RightHandAttackAnimations.Num();
+		//Debug
+		//CurrentWeaponAnimIndex = 2;
 
 		//Use a helper function that decides the complicated logic for what each AI animation state should do for the
 		//timeline (The currentweaponanimindex will be checked to see if it fits in the weapon anim array!!!)

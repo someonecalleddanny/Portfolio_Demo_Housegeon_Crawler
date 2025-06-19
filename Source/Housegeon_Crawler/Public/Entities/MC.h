@@ -211,6 +211,7 @@ private:
 	FTransform Temp_EndRightHandTransform;
 	int CurrentWeaponAnimIndex = 0;
 	bool bRightHandHit = false;
+	bool bFullyCompletedRightHand = true;
 
 	void Attack_One_Cell_Forward();
 
