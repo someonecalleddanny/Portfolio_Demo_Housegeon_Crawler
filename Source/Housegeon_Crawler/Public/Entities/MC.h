@@ -25,14 +25,6 @@
 
 #include "MC.generated.h"
 
-
-struct NormalizedGridTransform 
-{
-	int X = 0;
-	int Y = 0;
-	float NormalizedYaw = 0.f;
-};
-
 enum EWeaponAnimationState
 {
 	AtoB,
@@ -67,9 +59,6 @@ protected:
 
 	UFUNCTION()
 	void Spawn_At_Center_Grid();
-
-	//Grid Based Movement Based Logic
-	NormalizedGridTransform myGridTransform;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "C++ Grid Movement Logic")
 	bool bKeepWalkingForward = false;
@@ -212,14 +201,18 @@ public:
 
 private:
 
+	//Right Hand Weapon logic
 	EWeaponAnimationState CurrentRightHandWeaponAnimationState;
 	bool bRightHandIsAttacking = false;
 	FTransform Temp_StartRightHandTransform;
 	FTransform Temp_EndRightHandTransform;
 	int CurrentWeaponAnimIndex = 0;
 
+	void Attack_One_Cell_Forward();
+
 	//Player Grid Movement
-	FIntPoint OldCell;
+	FIntPoint CurrentCell;
+	float NormalizedYaw = 0.f;
 
 	void SetRandomSpawnRotation();
 

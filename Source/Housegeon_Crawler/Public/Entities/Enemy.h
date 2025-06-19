@@ -9,10 +9,12 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SceneComponent.h"
 
+#include "Interfaces/EnemyPawnComms.h"
+
 #include "Enemy.generated.h"
 
 UCLASS()
-class HOUSEGEON_CRAWLER_API AEnemy : public APawn
+class HOUSEGEON_CRAWLER_API AEnemy : public APawn, public IEnemyPawnComms
 {
 	GENERATED_BODY()
 
@@ -28,6 +30,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Info")
+	float Health = 5.f;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -36,6 +41,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
+	//Interface function calls
+	virtual void Send_Damage(float Damage) override;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "C++ Components", meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* EnemySkeleton;
 

@@ -133,14 +133,11 @@ void AMC::Spawn_At_Center_Grid()
 			SetRandomSpawnRotation();
 
 			//Then update the navigation grid to notify that the center location is occupied by the player
-			myGridTransform.X = DungeonGridInfo.Num() / 2;
-			myGridTransform.Y = DungeonGridInfo[0].Num() / 2;
-
-			OldCell.X = DungeonGridInfo.Num() / 2;
-			OldCell.Y = DungeonGridInfo[0].Num() / 2;
+			CurrentCell.X = DungeonGridInfo.Num() / 2;
+			CurrentCell.Y = DungeonGridInfo[0].Num() / 2;
 
 			//Make the spawned cell not movable for any other entity as well as update the global coords of the player
-			myDungeonState->SetPlayerSpawnInformation(OldCell);
+			myDungeonState->SetPlayerSpawnInformation(CurrentCell);
 		}
 		
 	}
@@ -222,24 +219,20 @@ void AMC::Manual_MoveForward()
 {
 	//Check if the forward cell (check rotation from normalised yaw, set when calling rotation functions),
 	//is movable
-	if (myDungeonState->Can_Move_Forward(myGridTransform.X, myGridTransform.Y, myGridTransform.NormalizedYaw))
+	if (myDungeonState->Can_Move_Forward(CurrentCell.X, CurrentCell.Y, NormalizedYaw))
 	{
 		UE_LOG(LogTemp, Display, TEXT("MOVING FORWARD!!!"));
 
 		//Make the previous cell movable for all entities
-		myDungeonState->UpdateOldMovementCell(OldCell);
+		//myDungeonState->UpdateOldMovementCell(OldCell);
 
 		//Now move the player coords forward by checking the normalised yaw from the player, Passed by reference,
 		//meaning the x and y values will be changed
-		myDungeonState->Moving_Forward(myGridTransform.X, myGridTransform.Y, myGridTransform.NormalizedYaw);
+		myDungeonState->Moving_Forward(this, CurrentCell.X, CurrentCell.Y, NormalizedYaw);
 
 		//After the coords above have been changed, update the global player coords for the enemy AI to track where the
-		//player is
-		myDungeonState->UpdatePlayerCoords(this, FIntPoint(myGridTransform.X, myGridTransform.Y));
-
-		//Update the new old cell to the current cell that the player is within
-		OldCell.X = myGridTransform.X;
-		OldCell.Y = myGridTransform.Y;
+		//player is (Old code, moving forward does it automatically now)
+		//myDungeonState->UpdatePlayerCoords(this, FIntPoint(myGridTransform.X, myGridTransform.Y));
 
 		//Set to false so the timeline can do the movement animation, set to true on finished in BP
 		bAbleToMove = false;
@@ -331,13 +324,13 @@ void AMC::RotateLeftRight(const FInputActionValue& Value)
 
 		//The temp normalised yaw system to make sure that the grid navigation is working (will fix on later stage of
 		//development, AI system)
-		myGridTransform.NormalizedYaw -= 90.f;
+		NormalizedYaw -= 90.f;
 
 		//if started on the forward rotation but moved left, go to WEST which is 270.f,
 		// do this to force 4 yaw values 0, 90 , 180, 270
-		if (myGridTransform.NormalizedYaw < 0) 
+		if (NormalizedYaw < 0) 
 		{
-			myGridTransform.NormalizedYaw = 270.f;
+			NormalizedYaw = 270.f;
 		}
 
 		//Rotate along the yaw to the left
@@ -352,12 +345,12 @@ void AMC::RotateLeftRight(const FInputActionValue& Value)
 	{
 		//The temp normalised yaw system to make sure that the grid navigation is working (will fix on later stage of
 		//development, AI system)
-		myGridTransform.NormalizedYaw += 90.f;
+		NormalizedYaw += 90.f;
 		
 		//if on WEST (270.f) degrees on yaw, Set it to NORTH which is 0.f, do this to force 4 yaw values 0, 90 , 180, 270
-		if (myGridTransform.NormalizedYaw > 270.f)
+		if (NormalizedYaw > 270.f)
 		{
-			myGridTransform.NormalizedYaw = 0.f;
+			NormalizedYaw = 0.f;
 		}
 
 		//Rotate along the yaw to rotate right
@@ -404,12 +397,12 @@ void AMC::Rotate180(const FInputActionValue& Value)
 	Desired_Rotation.Yaw += 180.f;
 
 	//Do the Navigation grid transform
-	myGridTransform.NormalizedYaw += 180.f;
+	NormalizedYaw += 180.f;
 
 	//If goes over 270, normalise by subtrating by 360
-	if (myGridTransform.NormalizedYaw > 270.f)
+	if (NormalizedYaw > 270.f)
 	{
-		myGridTransform.NormalizedYaw -= 360.f;
+		NormalizedYaw -= 360.f;
 	}
 
 	//Old Code when I had bp timeline logic
@@ -436,49 +429,9 @@ void AMC::Rotate180(const FInputActionValue& Value)
 
 void AMC::Interacted(const FInputActionValue& Value)
 {
-	//Get the player controller
-	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-
-	FMinimalViewInfo CamInfo;
-
-	myCamera->GetCameraView(0.f, CamInfo);
-
-	FVector WorldLocation = CamInfo.Location;
-
-	FVector EndLocation = CamInfo.Rotation.Vector();
-
-	EndLocation.Normalize();
-
-	FVector LineTraceEnd = WorldLocation + (EndLocation * 500.f);
-
-	//Passed as a reference so has to be created here
-	FHitResult HitResult;
-	//same here
-	FCollisionQueryParams CollisionParams;
-
-	//ignore the fact that the line trace might hit the self actor
-	CollisionParams.AddIgnoredActor(this);
-
-	//The actual line trace being created
-	if (GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, LineTraceEnd,
-		ECollisionChannel::ECC_Visibility, CollisionParams))
-	{
-		DrawDebugLine(GetWorld(), WorldLocation,
-			LineTraceEnd, FColor::Red, false, 2.f, 0, 0.1f);
-
-		if (HitResult.GetActor()) 
-		{
-			if (HitResult.GetActor()->ActorHasTag("POI")) 
-			{
-				IPOI_Interaction* POIInterface = Cast<IPOI_Interaction>(HitResult.GetActor());
-
-				if (POIInterface) 
-				{
-					POIInterface->Interacted();
-				}
-			}
-		}
-	}
+	/*
+		Will expand on later when interaction comes into the game
+	*/
 }
 
 void AMC::RightAttack(const FInputActionValue& Value)
@@ -502,6 +455,8 @@ void AMC::RightAttack(const FInputActionValue& Value)
 		//Use a helper function that decides the complicated logic for what each AI animation state should do for the
 		//timeline (The currentweaponanimindex will be checked to see if it fits in the weapon anim array!!!)
 		PlayRightHandAnimation(EWeaponAnimationState::AtoB, CurrentWeaponAnimIndex);
+
+		Attack_One_Cell_Forward();
 	}
 }
 
@@ -527,6 +482,35 @@ void AMC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	}
 }
 
+void AMC::Attack_One_Cell_Forward()
+{
+	TArray<FIntPoint> DamageArray = { CurrentCell };
+	FIntPoint& AttackCell = DamageArray[0];
+
+	// Check for "up" movement (yaw = 0)
+	if (FMath::IsNearlyEqual(NormalizedYaw, 0.0f, 10.f))
+	{
+		AttackCell.Y--;
+	}
+	// Check for "down" movement (yaw = 180)
+	else if (FMath::IsNearlyEqual(NormalizedYaw, 180.0f, 10.f))
+	{
+		AttackCell.Y++;
+	}
+	// Check for "left" movement (yaw = 270)
+	else if (FMath::IsNearlyEqual(NormalizedYaw, 270.0f, 10.f))
+	{
+		AttackCell.X--;
+	}
+	// Check for "right" movement (yaw = 90)
+	else if (FMath::IsNearlyEqual(NormalizedYaw, 90.0f, 10.f))
+	{
+		AttackCell.X++;
+	}
+
+	myDungeonState->Try_Sending_Damage_To_Entity(DamageArray, 999.f);
+}
+
 void AMC::SetRandomSpawnRotation()
 {
 	//Unreal's rotation system is crap so I am brute forcing my normalised rotation for every actor spawned to face
@@ -544,25 +528,25 @@ void AMC::SetRandomSpawnRotation()
 	case 0:
 		CustomRotationSpawn.Yaw = -90;
 		//Create a normalised rotation, (useful for when checking navigation grid), 0 means forward
-		myGridTransform.NormalizedYaw = 0.f;
+		NormalizedYaw = 0.f;
 		break;
 
 	case 1:
 		CustomRotationSpawn.Yaw = 0.0f;
 		//Create a normalised rotation, (useful for when checking navigation grid), 90 means right
-		myGridTransform.NormalizedYaw = 90.f;
+		NormalizedYaw = 90.f;
 		break;
 
 	case 2:
 		CustomRotationSpawn.Yaw = 90.0f;
 		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
-		myGridTransform.NormalizedYaw = 180.f;
+		NormalizedYaw = 180.f;
 		break;
 
 	case 3:
 		CustomRotationSpawn.Yaw = 180.0f;
 		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
-		myGridTransform.NormalizedYaw = 270.f;
+		NormalizedYaw = 270.f;
 		break;
 	}
 

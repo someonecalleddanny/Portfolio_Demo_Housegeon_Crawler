@@ -68,10 +68,21 @@ FAIManagerBatchPacket AAI_Manager::Pop_Patrol_Queue_Container()
 {
 	FAIManagerBatchPacket ReturnedPacket;
 
-	//So, if the current head is empty, don't increment or anything, just return a null ai packet
-	if (!QueuePatrolBatcher[PatrolHead].Get_Pawn().IsValid()) 
+	//The first if checks if the enemy ai has been killed but has an unresolved packet, This means that the queue is not
+	//empty, so just return an empty packet for tick and wait for the next tick cycle to see if the next head can be popped
+	if (!QueuePatrolBatcher[PatrolHead].Get_Pawn().IsValid()
+		&& QueuePatrolBatcher[PatrolHead].Check_If_Active_Batch_Packet())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("The patrol queue batcher in the ai manager is empty, awaiting new commands!"));
+		UE_LOG(LogTemp, Warning, TEXT("Current Popped pawn has been killed, going to next item in patrol queue!"));
+		//Then increment the Patrol Head for the next pop (allowing for wrapping around the queue container)
+		PatrolHead = (PatrolHead + 1) % QueuePatrolBatcher.Num();
+		return ReturnedPacket;
+	}
+	else if (!QueuePatrolBatcher[PatrolHead].Get_Pawn().IsValid() && PatrolHead == PatrolTail) 
+	{
+		//If the Index you are trying to pop has an invalid pawn and the head is == to the tail, that means that the queue
+		//Is empty because no more AI controllers have batched anymore events to execute
+		//UE_LOG(LogTemp, Warning, TEXT("Tried Popping in ai manager but the patrol queue is empty!"));
 		return ReturnedPacket;
 	}
 
@@ -115,7 +126,7 @@ void AAI_Manager::Tick(float DeltaTime)
 		// a pointer essentially means that the ai manager has set something up, there are checks below to stop any stupid
 		// coding and crashing (Such as not creating a function wrapper correctly)
 		//And, for safety, execute the function on the next tick cycle.
-		if (!(TempPacket.Get_Pawn().IsValid()))
+		if (!(TempPacket.Get_Pawn().IsValid()) || !TempPacket.Check_If_Active_Batch_Packet())
 		{
 			TickContainer[i] = Pop_Patrol_Queue_Container();
 			continue;
@@ -164,6 +175,8 @@ void AAI_Manager::Tick(float DeltaTime)
 		//call the onfinished event
 		if(TempPacket.Get_Alpha() >= 1.f)
 		{
+			TempPacket.Set_Batch_Packet_Finished();
+
 			//Call the function wrapper to the ai controller, if not valid, will crash the game but that's why I validate
 			//the controlled pawn as, if that dies, so will the ai controller (ALSO, checks in the struct if the wrapper is
 			//valid)

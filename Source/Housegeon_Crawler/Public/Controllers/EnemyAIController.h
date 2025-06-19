@@ -10,6 +10,8 @@
 
 #include "Components/TimelineComponent.h"
 
+#include "Interfaces/EnemyPawnToControllerComms.h"
+
 #include "EnemyAIController.generated.h"
 
 enum ECurrent_AI_State 
@@ -29,7 +31,7 @@ enum ECurrent_AI_State
  * 
  */
 UCLASS()
-class HOUSEGEON_CRAWLER_API AEnemyAIController : public AAIController
+class HOUSEGEON_CRAWLER_API AEnemyAIController : public AAIController, public IEnemyPawnToControllerComms
 {
 	GENERATED_BODY()
 
@@ -52,6 +54,10 @@ protected:
 	void Register_Enemy_Location_Cell();
 
 private:
+
+	//Interface Functions
+	virtual FIntPoint GetCurrentXY() override;
+
 	FIntPoint CurrentXY;
 	float NormalizedYaw = 0.f;
 	float EnemyRotationSpeed = 0.4f;

@@ -2,6 +2,9 @@
 
 
 #include "Entities/Enemy.h"
+#include "Dungeon_Generation/GS_DungeonGeneration.h"
+#include "Interfaces/EnemyPawnToControllerComms.h"
+
 
 // Sets default values
 AEnemy::AEnemy()
@@ -56,5 +59,28 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void AEnemy::Send_Damage(float Damage)
+{
+	UE_LOG(LogTemp, Display, TEXT("In enemy, interface worked, damaging: %s"), *this->GetName());
+
+	Health -= Damage;
+
+	if (Health <= 0.f) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("You have killed this enemy!"));
+
+		//Before, destroying, I need to update the current cell to be empty so other entities can move there
+		AGS_DungeonGeneration* GS = GetWorld()->GetGameState<AGS_DungeonGeneration>();
+		IEnemyPawnToControllerComms* ControllerComms = Cast<IEnemyPawnToControllerComms>(GetController());
+
+		if (GS && ControllerComms) 
+		{
+			GS->Killed_An_Entity(ControllerComms->GetCurrentXY());
+		}
+
+		this->Destroy();
+	}
 }
 

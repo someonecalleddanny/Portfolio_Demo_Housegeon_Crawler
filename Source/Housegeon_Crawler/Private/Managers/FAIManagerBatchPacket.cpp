@@ -35,6 +35,8 @@ FAIManagerBatchPacket FAIManagerBatchPacket::Set_Batch_Packet(TWeakObjectPtr<APa
     myEndRotOrLoc.Y = BY;
     myEndRotOrLoc.Z = BZ;
 
+    bActiveBatch = true;
+
     return *(this);
 }
 
@@ -53,6 +55,7 @@ void FAIManagerBatchPacket::Set_Delayed_Batch_Packet(TWeakObjectPtr<APawn> Contr
 
     ControlledPawnRef = ControlledPawnRef_Param;
     FunctionWrapperDelayedAIBatch = DelayBatchFunctionBind;
+    bActiveBatch = true;
 
     TimeToFinish = 0.5f;
 }
@@ -72,6 +75,16 @@ bool FAIManagerBatchPacket::Is_A_Delayed_Batch_Packet()
     {
         return false;
     }
+}
+
+bool FAIManagerBatchPacket::Check_If_Active_Batch_Packet()
+{
+    return bActiveBatch;
+}
+
+void FAIManagerBatchPacket::Set_Batch_Packet_Finished()
+{
+    bActiveBatch = false;
 }
 
 void FAIManagerBatchPacket::Set_Alpha(float Alpha)

@@ -29,7 +29,11 @@ public:
 	//This function updates the global player coords (Used for AI) as well as setting the cell as not movable onto
 	void SetPlayerSpawnInformation(FIntPoint PlayerCellInfo);
 
-	void Register_Entity_Cell_Location(FIntPoint EntityCellInfo);
+	/*
+	//Registers the inputted cell location as not movable and adds the entity to the damage cell array, Don't use if moving
+	//only use for when the entity has spawned or has not moved from one cell to another!.
+	*/
+	void Register_Entity_Cell_Location(FIntPoint EntityCellInfo, AActor* EntityToRegister);
 
 	void Set_AI_Manager(AAI_Manager* AIManager_PARAM, int MaxSpawnedEntities);
 
@@ -50,11 +54,20 @@ public:
 	FOnAIReady OnAIManagerReady;
 
 	bool Can_Move_Forward(int StartX, int StartY, float CurrentYaw);
-	void Moving_Forward(int& StartX, int &StartY, float CurrentYaw);
+	void Moving_Forward(AActor* EntityMoved, int& StartX, int& StartY, float CurrentYaw);
+
+	void Try_Sending_Damage_To_Entity(TArray<FIntPoint> DamageCells, float Damage);
+
+	/*
+		So you killed an entity, before destroying, call this function to update the cell to be movable and other stuff
+	*/
+	void Killed_An_Entity(FIntPoint CellLocation);
 
 private:
 
 	FIntPoint CurrentPlayerCoords;
+
+	TMap<FIntPoint, AActor*> EntityCoords;
 
 	AAI_Manager* myAIManager;
 

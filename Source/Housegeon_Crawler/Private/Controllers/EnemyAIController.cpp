@@ -73,7 +73,12 @@ void AEnemyAIController::Register_Enemy_Location_Cell()
 	CurrentXY.X = RawLocation.X / 400.f;
 	CurrentXY.Y = RawLocation.Y / 400.f;
 
-	myDungeonState->Register_Entity_Cell_Location(CurrentXY);
+	myDungeonState->Register_Entity_Cell_Location(CurrentXY, ControlledPawn);
+}
+
+FIntPoint AEnemyAIController::GetCurrentXY()
+{
+	return CurrentXY;
 }
 
 void AEnemyAIController::SetRandomRotation()
@@ -241,6 +246,7 @@ void AEnemyAIController::OnFinished()
 
 	//If here, the delayed function has finished executing, so flush it for a potential new delayed function to be bound
 	BatchPacketToSend.Finished_OnDelayed_Function();
+	BatchPacketToSend.Set_Batch_Packet_Finished();
 
 	if (MyCurrentAIState == ECurrent_AI_State::RotatedToMoveForward) 
 	{
@@ -266,7 +272,7 @@ FAIManagerBatchPacket AEnemyAIController::OnDelayedMoveForward()
 
 	//Notify to the GS that the cell that the enemy moved to is currently not movable and set the cell moved from to
 	//be movable (Also sets the internal x and y cell locations to be where move forward is from the navigation grid)
-	myDungeonState->Moving_Forward(CurrentXY.X, CurrentXY.Y, NormalizedYaw);
+	myDungeonState->Moving_Forward(ControlledPawn, CurrentXY.X, CurrentXY.Y, NormalizedYaw);
 
 	//Bind your onfinished function
 	CurrentBoundOnFinishedFunction = [this]()

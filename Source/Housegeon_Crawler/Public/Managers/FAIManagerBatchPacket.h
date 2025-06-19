@@ -41,6 +41,10 @@ public:
 	
 	FORCEINLINE bool Is_A_Delayed_Batch_Packet();
 
+	FORCEINLINE bool Check_If_Active_Batch_Packet();
+
+	FORCEINLINE void Set_Batch_Packet_Finished();
+
 	/*
 		Once you finish the alpha within the centralised tick, set the new alpha for the next tick, this function clamps
 		from 0 to 1 so don't worry for any potential game breaking bugs
@@ -80,9 +84,23 @@ private:
 	//Need the controlled pawn from the ai controller to allow the manager to move the enemy
 	TWeakObjectPtr<APawn> ControlledPawnRef;
 
+	/*
+		So I decided to test and use functors instead of an interface. At time on implementation I didn't really know
+		speed benefits of which is fastest: function pointer -> interface -> Funtor. This is because interface functions
+		are stored within a look up table. However, I still have the problem of circular dependency that really needs to be
+		rooted out before I can start using interface function. Yes I could forward declare but I would have to cast the
+		functions within my ai manager anyway (maybe might not have much of a difference compared to functor). So, I need
+		to find a way to either store the interface so I can just call it right out the gate and not cast or learn more
+		about how I can do function pointers because I need to optimise this further for mid/low systems. My work rig
+		is fine but more work needs to be done. At time of writing this is good enough for a showcase as this will take
+		around 1-2 weeks max, to refactor.
+	*/
+
 	// Function to call when finished (bind this from my AIController), Use this because I cannot include the ai controller
 	//as a header within my ai manager as a circular dependency will happen as the GS owns the ai manager and the 
 	TFunction<void()> FunctionWrapperOnFinished;
 
 	TFunction<FAIManagerBatchPacket()> FunctionWrapperDelayedAIBatch;
+
+	bool bActiveBatch = false;
 };
