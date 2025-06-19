@@ -67,7 +67,7 @@ private:
 
 	FIntPoint CurrentPlayerCoords;
 
-	TMap<FIntPoint, AActor*> EntityCoords;
+	TMap<FIntPoint, TWeakObjectPtr<AActor>> EntityCoords;
 
 	AAI_Manager* myAIManager;
 

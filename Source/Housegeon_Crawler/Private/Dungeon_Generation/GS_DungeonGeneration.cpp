@@ -9,6 +9,8 @@ void AGS_DungeonGeneration::Set_Dungeon_Grid_Info(TArray<TArray<EDungeonGenerati
 	DungeonGridInfo = DungeonGridInfo_Param;
     NavigationGrid = NavigationGrid_Param;
 
+    EntityCoords.Empty();
+
     //First check if the dungeon grid info is valid on the x axis, Important because a large part of gameplay relies on this
 	if (DungeonGridInfo.IsValidIndex(0)) 
 	{
@@ -298,24 +300,28 @@ void AGS_DungeonGeneration::Try_Sending_Damage_To_Entity(TArray<FIntPoint> Damag
     //even if it is one cell in front, so I want to reuse this function for new attack patterns that I will create in the
     //future.
     for (FIntPoint DamageCell : DamageCells) 
-    {        
-        AActor** DamageEntity = EntityCoords.Find(DamageCell);
+    {    
+        // Find returns nullptr if not found, so this alone covers Contains
+        TWeakObjectPtr<AActor>* DamageEntity = EntityCoords.Find(DamageCell);
 
-        //Check if the entity is at coords, if not continue because will need to deref pointer below
-        if (!DamageEntity) continue;
+        //Check if null ptr and check if the enemy/entity is pending kill or killed etc (any dangling pointer)
+        if (!DamageEntity || !DamageEntity->IsValid())
+            continue;
 
-        AActor* DePointeredDamageEntity = *(DamageEntity);
+        //Dereference the pointer
+        AActor* DePointeredDamageEntity = DamageEntity->Get();
 
-        //Now check if there is a valid pawn within the cell location
-        if (!DePointeredDamageEntity) continue;
+        //Check if null once again
+        if (!DePointeredDamageEntity)
+            continue;
 
         UE_LOG(LogTemp, Display, TEXT("Sending damage to enemy!"));
 
         IEnemyPawnComms* PawnComms = Cast<IEnemyPawnComms>(DePointeredDamageEntity);
 
-        if (!PawnComms) continue;
+        if (!PawnComms)
+            continue;
 
-        //This will most likely be sent to the enemy pawn class
         PawnComms->Send_Damage(Damage);
     }
 }
