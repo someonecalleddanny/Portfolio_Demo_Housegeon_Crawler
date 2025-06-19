@@ -16,6 +16,15 @@ AAI_Manager::AAI_Manager()
 
 void AAI_Manager::Set_Max_Entity_Count(int Amount)
 {
+	//If 0, set to 1 so that the tick can still function and not crash, I set this option really close to a showcase
+	//as a bandaid solution
+	/*
+		When have time, figure out the future of a 0 entity sized dungeon!
+	*/
+	if (Amount == 0)
+	{
+		Amount = 1;
+	}
 	//Set the max amount of entities that the queue batchers will hold, The idea is that the queue systems are static in
 	//size when the dungeon is generated, for now I'll only have a set amount of enemies that are spawned at the start
 	//No new ones will be spawned but I'll have to increase the max entity amount at start of generation

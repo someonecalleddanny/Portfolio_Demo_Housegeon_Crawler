@@ -195,6 +195,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Attack Animations")
 	UCurveFloat* RightHandAttackCurve;
 
+	UPROPERTY(EditAnywhere, Category = "Attack Animations")
+	TSubclassOf<UCameraShakeBase> AttackShake;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

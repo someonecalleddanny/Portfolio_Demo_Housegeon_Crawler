@@ -444,15 +444,67 @@ void AMC::Rotate180(const FInputActionValue& Value)
 
 void AMC::Interacted(const FInputActionValue& Value)
 {
-	/*
-		Will expand on later when interaction comes into the game
-	*/
+	//Get the player controller
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+
+	FMinimalViewInfo CamInfo;
+
+	myCamera->GetCameraView(0.f, CamInfo);
+
+	FVector WorldLocation = CamInfo.Location;
+
+	FVector EndLocation = CamInfo.Rotation.Vector();
+
+	EndLocation.Normalize();
+
+	FVector LineTraceEnd = WorldLocation + (EndLocation * 400.f);
+
+	//Passed as a reference so has to be created here
+	FHitResult HitResult;
+	//same here
+	FCollisionQueryParams CollisionParams;
+
+	//ignore the fact that the line trace might hit the self actor
+	CollisionParams.AddIgnoredActor(this);
+
+	//The actual line trace being created
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, LineTraceEnd,
+		ECollisionChannel::ECC_Visibility, CollisionParams))
+	{
+		//DrawDebugLine(GetWorld(), WorldLocation,
+			//LineTraceEnd, FColor::Red, false, 2.f, 0, 0.1f);
+
+		if (HitResult.GetActor()) 
+		{
+			if (HitResult.GetActor()->ActorHasTag("POI")) 
+			{
+				IPOI_Interaction* POIComms = Cast<IPOI_Interaction>(HitResult.GetActor());
+
+				if (POIComms)
+				{
+					POIComms->Interacted();
+				}
+			}
+			
+		}
+	}
 }
 
 void AMC::RightAttack(const FInputActionValue& Value)
 {
 	if (!bRightHandIsAttacking) 
 	{
+		//Set a camera shake when attacking
+		UGameplayStatics::PlayWorldCameraShake(
+			GetWorld(),
+			AttackShake,
+			GetActorLocation(),
+			800.f,
+			1000.f,
+			1.f,
+			false
+		);
+
 		UE_LOG(LogTemp, Display, TEXT("Right Attack Pressed!"));
 		//Have a bool that stops the left click from interuppting the lerp anim whilst it's mid way
 		//(Will be able to left click on the CtoA weapon state though!!!) -> For cool gameplay reasons...
