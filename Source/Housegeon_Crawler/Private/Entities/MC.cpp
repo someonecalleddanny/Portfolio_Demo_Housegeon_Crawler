@@ -234,7 +234,7 @@ void AMC::Manual_MoveForward()
 {
 	//Check if the forward cell (check rotation from normalised yaw, set when calling rotation functions),
 	//is movable
-	if (myDungeonState->Can_Move_Forward(CurrentCell.X, CurrentCell.Y, NormalizedYaw))
+	if (myDungeonState->Can_Move_Forward(CurrentCell.X, CurrentCell.Y, CurrentCompassDirection))
 	{
 		UE_LOG(LogTemp, Display, TEXT("MOVING FORWARD!!!"));
 
@@ -243,7 +243,7 @@ void AMC::Manual_MoveForward()
 
 		//Now move the player coords forward by checking the normalised yaw from the player, Passed by reference,
 		//meaning the x and y values will be changed
-		myDungeonState->Moving_Forward(this, CurrentCell.X, CurrentCell.Y, NormalizedYaw);
+		myDungeonState->Moving_Forward(this, CurrentCell.X, CurrentCell.Y, CurrentCompassDirection);
 
 		//After the coords above have been changed, update the global player coords for the enemy AI to track where the
 		//player is (Old code, moving forward does it automatically now)
@@ -335,18 +335,8 @@ void AMC::RotateLeftRight(const FInputActionValue& Value)
 	//Rotate -90 (left)
 	if (LeftRightChecker < 0.f)
 	{
-		UE_LOG(LogTemp, Display, TEXT("LEFT ROTATING, current rotation = %f"), GetActorRotation().Yaw);
-
-		//The temp normalised yaw system to make sure that the grid navigation is working (will fix on later stage of
-		//development, AI system)
-		NormalizedYaw -= 90.f;
-
-		//if started on the forward rotation but moved left, go to WEST which is 270.f,
-		// do this to force 4 yaw values 0, 90 , 180, 270
-		if (NormalizedYaw < 0) 
-		{
-			NormalizedYaw = 270.f;
-		}
+		//struct function that handles the casting of my compass enum to rotate my current rotation
+		CurrentCompassDirection.Rotate_90_Degrees(false);
 
 		//Rotate along the yaw to the left
 		Desired_Rotation.Yaw -= 90.f;
@@ -354,24 +344,15 @@ void AMC::RotateLeftRight(const FInputActionValue& Value)
 		//Old BP logic
 		//Call_Rotate_90(GetActorRotation(), Desired_Rotation);
 
-		//Rotate the normalised yaw left for the grid naviation system (Currently a temp solution will come back later)
+		
 	}
 	else//Rotating 90 degrees right
 	{
-		//The temp normalised yaw system to make sure that the grid navigation is working (will fix on later stage of
-		//development, AI system)
-		NormalizedYaw += 90.f;
-		
-		//if on WEST (270.f) degrees on yaw, Set it to NORTH which is 0.f, do this to force 4 yaw values 0, 90 , 180, 270
-		if (NormalizedYaw > 270.f)
-		{
-			NormalizedYaw = 0.f;
-		}
+		//struct function that handles the casting of my compass enum to rotate my current rotation
+		CurrentCompassDirection.Rotate_90_Degrees(true);
 
 		//Rotate along the yaw to rotate right
 		Desired_Rotation.Yaw += 90.f;
-
-		UE_LOG(LogTemp, Display, TEXT("Right ROTATING, current rotation = %f"), GetActorRotation().Yaw);
 	}
 
 	//Once finished with determining the new rotation from reading if going left right from A and D key inputs, do the
@@ -411,14 +392,8 @@ void AMC::Rotate180(const FInputActionValue& Value)
 	//Rotate along the Yaw to rotate the player behind
 	Desired_Rotation.Yaw += 180.f;
 
-	//Do the Navigation grid transform
-	NormalizedYaw += 180.f;
-
-	//If goes over 270, normalise by subtrating by 360
-	if (NormalizedYaw > 270.f)
-	{
-		NormalizedYaw -= 360.f;
-	}
+	//struct function that handles the casting of my compass enum to rotate my current rotation
+	CurrentCompassDirection.Rotate_180_Degrees();
 
 	//Old Code when I had bp timeline logic
 	//Call_Rotate_180(GetActorRotation(), Desired_Rotation);
@@ -561,28 +536,28 @@ void AMC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AMC::Attack_One_Cell_Forward()
 {
+	//Make an array for all the possible damage cells, attacking one cell forward just has one, the function call right at
+	//the end of this function needs an array of damage cells as I am planning for aoe attacks
 	TArray<FIntPoint> DamageArray = { CurrentCell };
 	FIntPoint& AttackCell = DamageArray[0];
 
-	// Check for "up" movement (yaw = 0)
-	if (FMath::IsNearlyEqual(NormalizedYaw, 0.0f, 10.f))
+	switch (CurrentCompassDirection.Get_Current_Compass_Direction()) 
 	{
+	case FCompassDirection::ECompassDirection::North:
 		AttackCell.Y--;
-	}
-	// Check for "down" movement (yaw = 180)
-	else if (FMath::IsNearlyEqual(NormalizedYaw, 180.0f, 10.f))
-	{
+		break;
+
+	case FCompassDirection::ECompassDirection::South:
 		AttackCell.Y++;
-	}
-	// Check for "left" movement (yaw = 270)
-	else if (FMath::IsNearlyEqual(NormalizedYaw, 270.0f, 10.f))
-	{
+		break;
+
+	case FCompassDirection::ECompassDirection::West:
 		AttackCell.X--;
-	}
-	// Check for "right" movement (yaw = 90)
-	else if (FMath::IsNearlyEqual(NormalizedYaw, 90.0f, 10.f))
-	{
+		break;
+
+	case FCompassDirection::ECompassDirection::East:
 		AttackCell.X++;
+		break;
 	}
 
 	myDungeonState->Try_Sending_Damage_To_Entity(DamageArray, 999.f);
@@ -595,7 +570,7 @@ void AMC::SetRandomSpawnRotation()
 	//Once I am comfortable with the navigation working, I will come back to this when I figure out how to 
 	//translate relative rotations with 0 being forward on the navigation grid (This will be priority when coding
 	//AI)
-	FRotator CustomRotationSpawn (0.0f, 0.0f, 0.0f);
+	FRotator CustomRotationSpawn (0.0f, 0.0f, 0.0f); // (Came back and settled for enums for internal rotations)
 	
 
 	int RandSpawn = FMath::RandRange(0, 3);
@@ -603,27 +578,29 @@ void AMC::SetRandomSpawnRotation()
 	switch (RandSpawn) 
 	{
 	case 0:
+		//In world -90 points to North
 		CustomRotationSpawn.Yaw = -90;
-		//Create a normalised rotation, (useful for when checking navigation grid), 0 means forward
-		NormalizedYaw = 0.f;
+		//The setting of the enum looks weird but I encapsulated my enum within my struct mainly for the enum size in
+		//rotation wrapping which I don't want anything else to intefere with
+		CurrentCompassDirection.Set_Compass_Direction(FCompassDirection::ECompassDirection::North);
 		break;
 
 	case 1:
+		//In world 0.0 points to East
 		CustomRotationSpawn.Yaw = 0.0f;
-		//Create a normalised rotation, (useful for when checking navigation grid), 90 means right
-		NormalizedYaw = 90.f;
+		CurrentCompassDirection.Set_Compass_Direction(FCompassDirection::ECompassDirection::East);
 		break;
 
 	case 2:
+		//In world 90.0 points to South
 		CustomRotationSpawn.Yaw = 90.0f;
-		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
-		NormalizedYaw = 180.f;
+		CurrentCompassDirection.Set_Compass_Direction(FCompassDirection::ECompassDirection::South);
 		break;
 
 	case 3:
+		//In world 180.0 points to West
 		CustomRotationSpawn.Yaw = 180.0f;
-		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
-		NormalizedYaw = 270.f;
+		CurrentCompassDirection.Set_Compass_Direction(FCompassDirection::ECompassDirection::West);
 		break;
 	}
 

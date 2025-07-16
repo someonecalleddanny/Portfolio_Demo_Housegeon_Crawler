@@ -223,7 +223,7 @@ private:
 
 	//Player Grid Movement
 	FIntPoint CurrentCell;
-	float NormalizedYaw = 0.f;
+	FCompassDirection CurrentCompassDirection;
 
 	void SetRandomSpawnRotation();
 

@@ -171,23 +171,24 @@ TArray<TArray<EDungeonGenerationType>> AGS_DungeonGeneration::Get_Dungeon_Grid_I
 	return DungeonGridInfo;
 }
 
-bool AGS_DungeonGeneration::Can_Move_Forward(int StartX, int StartY, ECompassDirection CurrentDirection)
+bool AGS_DungeonGeneration::Can_Move_Forward(int StartX, int StartY, FCompassDirection CurrentDirection)
 {
-    switch (CurrentDirection) 
+    FCompassDirection::ECompassDirection CurrentDirectionENUM = CurrentDirection.Get_Current_Compass_Direction();
+    switch (CurrentDirectionENUM)
     {
-    case ECompassDirection::North:
+    case FCompassDirection::ECompassDirection::North:
         StartY--;
         break;
 
-    case ECompassDirection::South:
+    case FCompassDirection::ECompassDirection::South:
         StartY++;
         break;
 
-    case ECompassDirection::West:
+    case FCompassDirection::ECompassDirection::West:
         StartX--;
         break;
 
-    case ECompassDirection::East:
+    case FCompassDirection::ECompassDirection::East:
         StartX++;
         break;
 
@@ -202,7 +203,7 @@ bool AGS_DungeonGeneration::Can_Move_Forward(int StartX, int StartY, ECompassDir
     return NavigationGrid[StartX][StartY];
 }
 
-void AGS_DungeonGeneration::Moving_Forward(AActor* EntityMoved, int& StartX, int& StartY, ECompassDirection CurrentDirection)
+void AGS_DungeonGeneration::Moving_Forward(AActor* EntityMoved, int& StartX, int& StartY, FCompassDirection CurrentDirection)
 {
     if (!Check_Valid_Movement_Indices(StartX, StartY)) return;
 
@@ -223,21 +224,23 @@ void AGS_DungeonGeneration::Moving_Forward(AActor* EntityMoved, int& StartX, int
     //changed in this function
     NavigationGrid[StartX][StartY] = true;
 
-    switch (CurrentDirection)
+    FCompassDirection::ECompassDirection CurrentDirectionENUM = CurrentDirection.Get_Current_Compass_Direction();
+
+    switch (CurrentDirectionENUM)
     {
-    case ECompassDirection::North:
+    case  FCompassDirection::ECompassDirection::North:
         StartY--;
         break;
 
-    case ECompassDirection::South:
+    case  FCompassDirection::ECompassDirection::South:
         StartY++;
         break;
 
-    case ECompassDirection::West:
+    case  FCompassDirection::ECompassDirection::West:
         StartX--;
         break;
 
-    case ECompassDirection::East:
+    case  FCompassDirection::ECompassDirection::East:
         StartX++;
         break;
 
