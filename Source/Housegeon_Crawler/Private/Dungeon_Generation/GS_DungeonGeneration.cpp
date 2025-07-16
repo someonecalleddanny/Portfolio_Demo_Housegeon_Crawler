@@ -171,71 +171,40 @@ TArray<TArray<EDungeonGenerationType>> AGS_DungeonGeneration::Get_Dungeon_Grid_I
 	return DungeonGridInfo;
 }
 
-bool AGS_DungeonGeneration::Can_Move_Forward(int StartX, int StartY, float CurrentYaw)
+bool AGS_DungeonGeneration::Can_Move_Forward(int StartX, int StartY, ECompassDirection CurrentDirection)
 {
-	// Check if StartX and StartY are in valid bounds
-    if (!(NavigationGrid.IsValidIndex(StartX))) return false;
-    if (!(NavigationGrid[StartX].IsValidIndex(StartY))) return false;
+    switch (CurrentDirection) 
+    {
+    case ECompassDirection::North:
+        StartY--;
+        break;
 
-    //UE_LOG(LogTemp, Warning, TEXT("Trying to move forward current rotation is %f"), CurrentYaw);
-    //UE_LOG(LogTemp, Warning, TEXT("Current X =  %d"), StartX);
-    //UE_LOG(LogTemp, Warning, TEXT("Current Y =  %d"), StartY);
+    case ECompassDirection::South:
+        StartY++;
+        break;
 
+    case ECompassDirection::West:
+        StartX--;
+        break;
 
-    // Check for "up" movement (yaw = 0)
-    if (FMath::IsNearlyEqual(CurrentYaw, 0.0f, 10.f))
-    {
-        //Check place moving to is valid
-        if (NavigationGrid[StartX].IsValidIndex(StartY - 1)) 
-        {
-            return NavigationGrid[StartX][StartY - 1]; // Upward
-        }
-    }
-    // Check for "down" movement (yaw = 180)
-    else if (FMath::IsNearlyEqual(CurrentYaw, 180.0f, 10.f))
-    {
-        //Check place moving to is valid
-        if (NavigationGrid[StartX].IsValidIndex(StartY + 1)) 
-        {
-            return NavigationGrid[StartX][StartY + 1]; // Downward
-        }
-    }
-    // Check for "left" movement (yaw = 270)
-    else if (FMath::IsNearlyEqual(CurrentYaw, 270.0f, 10.f))
-    {
-        //Check place moving to is valid
-        if (NavigationGrid.IsValidIndex(StartX - 1)) 
-        {
-            return NavigationGrid[StartX - 1][StartY]; // Leftward
-        }
-    }
-    // Check for "right" movement (yaw = 90)
-    else if (FMath::IsNearlyEqual(CurrentYaw, 90.0f, 10.f))
-    {
-        //Check place moving to is valid
-        if (NavigationGrid.IsValidIndex(StartX + 1)) 
-        {
-            return NavigationGrid[StartX + 1][StartY]; // Rightward
-        }
+    case ECompassDirection::East:
+        StartX++;
+        break;
+
+    default:
+        UE_LOG(LogTemp, Error, TEXT("GS: current direction checked is stuck on a diagonal compass direction, fix code!"));
+        return false;
     }
 
-    return false; // Default to false if out of bounds or any failure condition
+    if (!Check_Valid_Movement_Indices(StartX, StartY)) return false;
+
+    //Return true from the array if there is a valid movement cell that you are going to move forward to
+    return NavigationGrid[StartX][StartY];
 }
 
-void AGS_DungeonGeneration::Moving_Forward(AActor* EntityMoved, int& StartX, int& StartY, float CurrentYaw)
+void AGS_DungeonGeneration::Moving_Forward(AActor* EntityMoved, int& StartX, int& StartY, ECompassDirection CurrentDirection)
 {
-    //I know that this function is going to be used with canmoveforward function that checks if the indices
-    //are valid but I will check again in case I forget or something etc etc.
-    if (!NavigationGrid.IsValidIndex(StartX)) 
-    {
-        UE_LOG(LogTemp, Error, TEXT("GS: Inputted startx index is not valid for navigation grid"));
-        return;
-    }
-    if (!NavigationGrid[StartX].IsValidIndex(StartY)) 
-    {
-        UE_LOG(LogTemp, Error, TEXT("GS: Inputted starty index is not valid for navigation grid"));
-        return;
-    }
+    if (!Check_Valid_Movement_Indices(StartX, StartY)) return;
 
     //Create a temp IntPoint variable for checking maps
     FIntPoint CurrentXY(StartX, StartY);
@@ -254,26 +223,31 @@ void AGS_DungeonGeneration::Moving_Forward(AActor* EntityMoved, int& StartX, int
     //changed in this function
     NavigationGrid[StartX][StartY] = true;
 
-    // Check for "up" movement (yaw = 0)
-    if (FMath::IsNearlyEqual(CurrentYaw, 0.0f, 10.f))
+    switch (CurrentDirection)
     {
+    case ECompassDirection::North:
         StartY--;
-    }
-    // Check for "down" movement (yaw = 180)
-    else if (FMath::IsNearlyEqual(CurrentYaw, 180.0f, 10.f))
-    {
+        break;
+
+    case ECompassDirection::South:
         StartY++;
-    }
-    // Check for "left" movement (yaw = 270)
-    else if (FMath::IsNearlyEqual(CurrentYaw, 270.0f, 10.f))
-    {
+        break;
+
+    case ECompassDirection::West:
         StartX--;
-    }
-    // Check for "right" movement (yaw = 90)
-    else if (FMath::IsNearlyEqual(CurrentYaw, 90.0f, 10.f))
-    {
+        break;
+
+    case ECompassDirection::East:
         StartX++;
+        break;
+
+    default:
+        UE_LOG(LogTemp, Error, TEXT("GS: current direction checked is stuck on a diagonal compass direction, fix code!"));
+        return;
     }
+
+    //Check the new updated StartX/Y again to see if still in bounds
+    if (!Check_Valid_Movement_Indices(StartX, StartY)) return;
 
     //After moving to the new location, set that cell to not be movable as there is an entity on it
     NavigationGrid[StartX][StartY] = false;
@@ -292,6 +266,22 @@ void AGS_DungeonGeneration::Moving_Forward(AActor* EntityMoved, int& StartX, int
         CurrentPlayerCoords = CurrentXY;
         //UE_LOG(LogTemp, Display, TEXT("Moved the player and updated current coords within GS"));
     }
+}
+
+bool AGS_DungeonGeneration::Check_Valid_Movement_Indices(int StartX, int StartY)
+{
+    if (!NavigationGrid.IsValidIndex(StartX))
+    {
+        UE_LOG(LogTemp, Error, TEXT("GS: Inputted startx index is not valid for navigation grid"));
+        return false;
+    }
+    if (!NavigationGrid[StartX].IsValidIndex(StartY))
+    {
+        UE_LOG(LogTemp, Error, TEXT("GS: Inputted starty index is not valid for navigation grid"));
+        return false;
+    }
+
+    return true;
 }
 
 void AGS_DungeonGeneration::Try_Sending_Damage_To_Entity(TArray<FIntPoint> DamageCells, float Damage)

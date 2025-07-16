@@ -21,6 +21,8 @@
 
 #include "Camera/CameraShakeBase.h"
 
+#include "Unique_ENUMS/ECompassDirection.h"
+
 #include "Combat/FWeaponAnimationInfo.h"
 
 #include "MC.generated.h"
@@ -41,6 +43,7 @@ public:
 	// Sets default values for this character's properties
 	AMC();
 
+	//All the components made
 	FORCEINLINE class UCameraComponent* GetCamera() const { return myCamera; }
 	FORCEINLINE UCapsuleComponent* GetMyCapsule() const { return myCapsule; }
 	FORCEINLINE UTimelineComponent* GetMyTimeline() const { return MovementTimeline; }

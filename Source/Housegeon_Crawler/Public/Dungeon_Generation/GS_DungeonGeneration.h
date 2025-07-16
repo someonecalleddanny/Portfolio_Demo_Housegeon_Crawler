@@ -11,6 +11,8 @@
 
 #include "Managers/AI_Manager.h"
 
+#include "Unique_ENUMS/ECompassDirection.h"
+
 #include "GS_DungeonGeneration.generated.h"
 
 
@@ -53,8 +55,9 @@ public:
 	FOnGridReady OnGridReady;
 	FOnAIReady OnAIManagerReady;
 
-	bool Can_Move_Forward(int StartX, int StartY, float CurrentYaw);
-	void Moving_Forward(AActor* EntityMoved, int& StartX, int& StartY, float CurrentYaw);
+	bool Can_Move_Forward(int StartX, int StartY, ECompassDirection CurrentDirection);
+	void Moving_Forward(AActor* EntityMoved, int& StartX, int& StartY, ECompassDirection CurrentDirection);
+	bool Check_Valid_Movement_Indices(int StartX, int StartY);
 
 	void Try_Sending_Damage_To_Entity(TArray<FIntPoint> DamageCells, float Damage);
 
