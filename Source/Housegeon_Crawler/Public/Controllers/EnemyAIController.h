@@ -10,6 +10,8 @@
 
 #include "Components/TimelineComponent.h"
 
+#include "Unique_ENUMS/ECompassDirection.h"
+
 #include "Interfaces/EnemyPawnToControllerComms.h"
 
 #include "EnemyAIController.generated.h"
@@ -59,7 +61,7 @@ private:
 	virtual FIntPoint GetCurrentXY() override;
 
 	FIntPoint CurrentXY;
-	float NormalizedYaw = 0.f;
+	FCompassDirection CurrentCompassDirection;
 	float EnemyRotationSpeed = 0.4f;
 	float EnemyWalkingSpeed = 1.f;
 	float RotationErrorTolerance = 0.5f;

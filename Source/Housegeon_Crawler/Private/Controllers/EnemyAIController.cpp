@@ -95,27 +95,29 @@ void AEnemyAIController::SetRandomRotation()
 	switch (RandSpawn)
 	{
 	case 0:
+		//In world -90 points to North
 		CustomRotationSpawn.Yaw = -90;
-		//Create a normalised rotation, (useful for when checking navigation grid), 0 means forward
-		NormalizedYaw = 0.f;
+		//The setting of the enum looks weird but I encapsulated my enum within my struct mainly for the enum size in
+		//rotation wrapping which I don't want anything else to intefere with
+		CurrentCompassDirection.Set_Compass_Direction(FCompassDirection::ECompassDirection::North);
 		break;
 
 	case 1:
+		//In world 0.0 points to East
 		CustomRotationSpawn.Yaw = 0.0f;
-		//Create a normalised rotation, (useful for when checking navigation grid), 90 means right
-		NormalizedYaw = 90.f;
+		CurrentCompassDirection.Set_Compass_Direction(FCompassDirection::ECompassDirection::East);
 		break;
 
 	case 2:
+		//In world 90.0 points to South
 		CustomRotationSpawn.Yaw = 90.0f;
-		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
-		NormalizedYaw = 180.f;
+		CurrentCompassDirection.Set_Compass_Direction(FCompassDirection::ECompassDirection::South);
 		break;
 
 	case 3:
+		//In world 180.0 points to West
 		CustomRotationSpawn.Yaw = 180.0f;
-		//Create a normalised rotation, (useful for when checking navigation grid), 0 means back
-		NormalizedYaw = 270.f;
+		CurrentCompassDirection.Set_Compass_Direction(FCompassDirection::ECompassDirection::West);
 		break;
 	}
 

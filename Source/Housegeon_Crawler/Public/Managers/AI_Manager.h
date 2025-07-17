@@ -7,6 +7,7 @@
 
 #include "Managers/FAIManagerBatchPacket.h"
 
+
 #include "AI_Manager.generated.h"
 
 UCLASS()
