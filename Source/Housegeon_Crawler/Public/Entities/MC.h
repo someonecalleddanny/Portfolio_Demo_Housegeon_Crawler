@@ -63,13 +63,15 @@ protected:
 	UFUNCTION()
 	void Spawn_At_Center_Grid();
 
+	//Movement timeline variables
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "C++ Grid Movement Logic")
 	bool bKeepWalkingForward = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "C++ Grid Movement Logic")
 	bool bAbleToMove = true;
 
-	
+	bool bIsMovingForwardNotLeftRight;
+
 	//Camera Shakes
 
 	UPROPERTY(EditAnywhere, Category = "C++ Camera Shakes")

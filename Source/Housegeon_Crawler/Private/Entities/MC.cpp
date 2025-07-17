@@ -154,9 +154,12 @@ void AMC::OnMovementTimelineFinished()
 {
 	bAbleToMove = true;
 
-	if (bKeepWalkingForward) 
+	if (bIsMovingForwardNotLeftRight) 
 	{
-		Manual_MoveForward();
+		if (bKeepWalkingForward)
+		{
+			Manual_MoveForward();
+		}
 	}
 }
 
@@ -314,32 +317,98 @@ void AMC::MoveForward(const FInputActionValue& Value)
 		return;
 	}
 
+	//Used when the movement timeline is finished as I need to check if I was moving forward or left/right
+	bIsMovingForwardNotLeftRight = true;
+
 	//Call the C++ logic to move forward
 	Manual_MoveForward();
 }
 
 void AMC::MoveLeftRight(const FInputActionValue& Value)
 {
+	//the whole movement logic relies on the game state, so instantly shoot red flags if not valid
+	if (!myDungeonState)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dungeon Game State not found!!!"));
+		return;
+	}
+
+	//if already moving from another function or this, instantly return and don't do logic below
+	if (!bAbleToMove)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING OR FIGHTING"));
+		return;
+	}
+
 	FCompassDirection TempDirection = CurrentCompassDirection;
-	
-	int MoveLeftOrRightChecker = 0;
+
+	//Used when the movement timeline is finished as I need to check if I was moving forward or left/right
+	bIsMovingForwardNotLeftRight = false;
+
+	float EndLocationRightVectorAdder = 400.f;
 
 	//Clicked input to move left
 	if (Value.Get<float>() < 0.f) 
 	{
 		TempDirection.Rotate_By_X_Amount(-90.f);
+
+		//Make the adder negative for the end location vector below as going left
+		EndLocationRightVectorAdder *= -1.f;
 	}
 	else //else means a positive which is right (not checking for deadzone here)
 	{
 		TempDirection.Rotate_By_X_Amount(90.f);
 	}
 
+	//Use the temp direction as I am not updating the current compass direction as I am moving from one cell in this function
+	if (myDungeonState->Can_Move_Forward(CurrentCell.X, CurrentCell.Y, TempDirection)) 
+	{
+		//x and y get passed in as reference so they get updated when moving from one cell to the other
+		myDungeonState->Moving_Forward(this, CurrentCell.X, CurrentCell.Y, TempDirection);
 
+		//stop all other movement events until the timeline is finished
+		bAbleToMove = false;
+
+		FVector StartLocation = GetActorLocation();
+
+		FVector EndLocation = GetActorLocation() + (GetActorRightVector() * EndLocationRightVectorAdder);
+		EndLocation.Z = StartLocation.Z;
+
+		//Set a camera shake towards the player when they move to create juice into the walking
+		UGameplayStatics::PlayWorldCameraShake(
+			GetWorld(),
+			MoveForwardCameraShakeClass,
+			GetActorLocation(),
+			800.f,
+			1000.f,
+			1.f,
+			false
+		);
+
+		//Set the start/end lerp locations which will be used in the movementtimeline event
+		MoveForwardStartLocation = StartLocation;
+		MoveForwardEndLocation = EndLocation;
+
+		//Check if the Movement timeline component is valid. Sometimes Unreal has a bug where the component
+		//Does not init. If failed to init, I have to reload the BP child class to force update the component
+		if (MovementTimeline)
+		{
+			MovementTimeline->PlayFromStart();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Timeline Not Valid"));
+		}
+
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Forward path blocked, can't move forward"))
+	}
 }
 
 void AMC::RotateLeftRight(const FInputActionValue& Value)
 {
-
 	//if already moving from another function or this, instantly return and don't do logic below
 	if (!bAbleToMove)
 	{
