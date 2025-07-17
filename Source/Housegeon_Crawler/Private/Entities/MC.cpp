@@ -336,7 +336,7 @@ void AMC::RotateLeftRight(const FInputActionValue& Value)
 	if (LeftRightChecker < 0.f)
 	{
 		//struct function that handles the casting of my compass enum to rotate my current rotation
-		CurrentCompassDirection.Rotate_90_Degrees(false);
+		CurrentCompassDirection.Rotate_By_X_Amount(-90.f);
 
 		//Rotate along the yaw to the left
 		Desired_Rotation.Yaw -= 90.f;
@@ -349,7 +349,7 @@ void AMC::RotateLeftRight(const FInputActionValue& Value)
 	else//Rotating 90 degrees right
 	{
 		//struct function that handles the casting of my compass enum to rotate my current rotation
-		CurrentCompassDirection.Rotate_90_Degrees(true);
+		CurrentCompassDirection.Rotate_By_X_Amount(90.f);
 
 		//Rotate along the yaw to rotate right
 		Desired_Rotation.Yaw += 90.f;
@@ -393,7 +393,7 @@ void AMC::Rotate180(const FInputActionValue& Value)
 	Desired_Rotation.Yaw += 180.f;
 
 	//struct function that handles the casting of my compass enum to rotate my current rotation
-	CurrentCompassDirection.Rotate_180_Degrees();
+	CurrentCompassDirection.Rotate_By_X_Amount(180.f);
 
 	//Old Code when I had bp timeline logic
 	//Call_Rotate_180(GetActorRotation(), Desired_Rotation);

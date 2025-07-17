@@ -193,24 +193,15 @@ FAIManagerBatchPacket AEnemyAIController::Rotate_Enemy_By_X_Amount(float YawAdde
 	//Anyway if the need arises later on during the making of the game
 	YawAdder = FMath::Clamp(YawAdder, -360.f, 360.f);
 
-	//Add the yaw with either a positive or negative adder to simulate the left and right rotations
-	NormalizedYaw += YawAdder;
+	//Add the yaw with either a positive or negative adder to simulate the left and right rotations, remember need to
+	//represent the internal rotations for movement as well as rotation in world (This is for internal rotation logic)
+	CurrentCompassDirection.Rotate_By_X_Amount(YawAdder);
 
 	//This is the Yaw that will actually set the rotation of the controlled pawn, do this because 
 	//I am not reading the pawn's world rotation when checking for rotation within AI functions as
 	//I have my own local rotation which dictates what is North,East etc with the NormalisedYaw variable.
 	float WorldYaw = ControlledPawn->GetActorRotation().Yaw;
 	float AddedWorldYaw = WorldYaw + YawAdder;
-
-	//These are the wrappers
-	if (NormalizedYaw >= 360.f - RotationErrorTolerance)
-	{
-		NormalizedYaw -= 360.f;
-	}
-	else if (NormalizedYaw <= 0.f - RotationErrorTolerance)
-	{
-		NormalizedYaw += 360.f;
-	}
 
 	//Set the enemy speed by getting the average speed of the enemy and times it by the magnitude of your rotation
 	float TempSpeed = (EnemyRotationSpeed) * (YawAdder / 90.f);
@@ -265,7 +256,7 @@ void AEnemyAIController::OnFinished()
 FAIManagerBatchPacket AEnemyAIController::OnDelayedMoveForward()
 {
 	//Check if the enemy can actually move forward
-	if (!myDungeonState->Can_Move_Forward(CurrentXY.X, CurrentXY.Y, NormalizedYaw))
+	if (!myDungeonState->Can_Move_Forward(CurrentXY.X, CurrentXY.Y, CurrentCompassDirection))
 	{
 		//I cannot move forward, so I am going to find a random possible rotation that I can move forward from and do the
 		//rotation for the current batch and on finish, try the Notify_Delayed_Move_Forward() function again
@@ -274,7 +265,7 @@ FAIManagerBatchPacket AEnemyAIController::OnDelayedMoveForward()
 
 	//Notify to the GS that the cell that the enemy moved to is currently not movable and set the cell moved from to
 	//be movable (Also sets the internal x and y cell locations to be where move forward is from the navigation grid)
-	myDungeonState->Moving_Forward(ControlledPawn, CurrentXY.X, CurrentXY.Y, NormalizedYaw);
+	myDungeonState->Moving_Forward(ControlledPawn, CurrentXY.X, CurrentXY.Y, CurrentCompassDirection);
 
 	//Bind your onfinished function
 	CurrentBoundOnFinishedFunction = [this]()

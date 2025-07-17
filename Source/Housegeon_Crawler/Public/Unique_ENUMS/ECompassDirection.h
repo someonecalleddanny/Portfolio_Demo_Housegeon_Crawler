@@ -8,6 +8,9 @@ struct FCompassDirection
 {
 	enum class ECompassDirection : uint8
 	{
+		/*
+			IF ADDING OR REMOVING NEW DIRECTIONS, MAKE UNIFORM!
+		*/
 		North,
 		NorthEast,
 		East,
@@ -40,12 +43,7 @@ struct FCompassDirection
 		CompassDirection = NewCompassDirection;
 	}
 
-	/*
-		Rotate the compass direction either left or right, true = right, false = left
-	*/
-	void Rotate_90_Degrees(bool bIsGoingRight);
-
-	void Rotate_180_Degrees();
+	void Rotate_By_X_Amount(float RotationAdder);
 
 private:
 	ECompassDirection CompassDirection;
