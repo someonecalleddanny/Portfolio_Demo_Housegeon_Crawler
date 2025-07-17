@@ -318,6 +318,25 @@ void AMC::MoveForward(const FInputActionValue& Value)
 	Manual_MoveForward();
 }
 
+void AMC::MoveLeftRight(const FInputActionValue& Value)
+{
+	FCompassDirection TempDirection = CurrentCompassDirection;
+	
+	int MoveLeftOrRightChecker = 0;
+
+	//Clicked input to move left
+	if (Value.Get<float>() < 0.f) 
+	{
+		TempDirection.Rotate_By_X_Amount(-90.f);
+	}
+	else //else means a positive which is right (not checking for deadzone here)
+	{
+		TempDirection.Rotate_By_X_Amount(90.f);
+	}
+
+
+}
+
 void AMC::RotateLeftRight(const FInputActionValue& Value)
 {
 
@@ -527,6 +546,7 @@ void AMC::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	if (UEnhancedInputComponent* AddInputAction = Cast<UEnhancedInputComponent>(InputComponent))
 	{
 		AddInputAction->BindAction(IA_MoveForward, ETriggerEvent::Triggered, this, &AMC::MoveForward);
+		AddInputAction->BindAction(IA_MoveLeftRight, ETriggerEvent::Triggered, this, &AMC::MoveLeftRight);
 		AddInputAction->BindAction(IA_RotateLeftRight, ETriggerEvent::Triggered, this, &AMC::RotateLeftRight);
 		AddInputAction->BindAction(IA_RotateLeftRight180, ETriggerEvent::Triggered, this, &AMC::Rotate180);
 		AddInputAction->BindAction(IA_Interacted, ETriggerEvent::Triggered, this, &AMC::Interacted);

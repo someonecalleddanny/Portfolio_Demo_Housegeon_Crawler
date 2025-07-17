@@ -250,7 +250,7 @@ void AGS_DungeonGeneration::Moving_Forward(AActor* EntityMoved, int& StartX, int
     }
 
     //Check the new updated StartX/Y again to see if still in bounds
-    if (!Check_Valid_Movement_Indices(StartX, StartY)) return;
+    //if (!Check_Valid_Movement_Indices(StartX, StartY)) return;
 
     //After moving to the new location, set that cell to not be movable as there is an entity on it
     NavigationGrid[StartX][StartY] = false;
@@ -273,14 +273,19 @@ void AGS_DungeonGeneration::Moving_Forward(AActor* EntityMoved, int& StartX, int
 
 bool AGS_DungeonGeneration::Check_Valid_Movement_Indices(int StartX, int StartY)
 {
+    /*
+        Right now the AI is inputting invalid X coords somewhere, but the AI still seems to be doing alright. It might
+        be because I send over an invalid movement when cannot move so might be alright. Will come back to this if I 
+        find a logic bug for movement with AI.
+    */
     if (!NavigationGrid.IsValidIndex(StartX))
     {
-        UE_LOG(LogTemp, Error, TEXT("GS: Inputted startx index is not valid for navigation grid"));
+        //UE_LOG(LogTemp, Error, TEXT("GS: Inputted startx index is not valid for navigation grid"));
         return false;
     }
     if (!NavigationGrid[StartX].IsValidIndex(StartY))
     {
-        UE_LOG(LogTemp, Error, TEXT("GS: Inputted starty index is not valid for navigation grid"));
+        //UE_LOG(LogTemp, Error, TEXT("GS: Inputted starty index is not valid for navigation grid"));
         return false;
     }
 

@@ -167,6 +167,9 @@ protected:
 	UInputAction* IA_MoveForward;
 
 	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
+	UInputAction* IA_MoveLeftRight;
+
+	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
 	UInputAction* IA_RotateLeftRight;
 
 	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
@@ -179,6 +182,7 @@ protected:
 	UInputAction* IA_RightAttack;
 
 	void MoveForward(const FInputActionValue& Value);
+	void MoveLeftRight(const FInputActionValue& Value);
 	void RotateLeftRight(const FInputActionValue& Value);
 	void Rotate180(const FInputActionValue& Value);
 	void Interacted(const FInputActionValue& Value);

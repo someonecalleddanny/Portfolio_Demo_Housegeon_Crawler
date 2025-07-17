@@ -45,6 +45,24 @@ struct FCompassDirection
 
 	void Rotate_By_X_Amount(float RotationAdder);
 
+	ECompassDirection Get_Possible_Compass_Direction_From_Added_X_Rotation(float RotationAdder)
+	{
+		int8 IntCastedDirection = static_cast<int8>(CompassDirection);
+
+		//cast the adder and normalise for the compass direction ENUM
+		int ENUM_IntCastAdder = FMath::RoundToInt((Compass_ENUM_Size) * (RotationAdder / 360.f));
+
+		//Modulus the adder so that it wraps for the total size of the ECompassDirection ENUM
+		IntCastedDirection = ((IntCastedDirection + ENUM_IntCastAdder) % Compass_ENUM_Size + Compass_ENUM_Size)
+			% Compass_ENUM_Size;
+
+		//Not overwriting my CompassDirection here in this function, just sending back a possible direction that could be
+		//made
+		ECompassDirection CompassReturn = static_cast<ECompassDirection>(IntCastedDirection);
+
+		return CompassReturn;
+	};
+
 private:
 	ECompassDirection CompassDirection;
 	static const int Compass_ENUM_Size = static_cast<int>(ECompassDirection::Compass_Size_For_Modulus_Wrapping_Rotation);

@@ -297,33 +297,26 @@ FAIManagerBatchPacket AEnemyAIController::Rotate_To_Be_Able_To_Move_Forward()
 	//try move forward on next batch)
 	TArray<float> RandomFloatsToChoose;
 	int RandIndex;
+	int Int_Casted_TempDirection = static_cast<int>(CurrentCompassDirection.Get_Current_Compass_Direction());
 	float TempYaw;
-	float PotentialYaw;
+
+	FCompassDirection TempCompassDirection = CurrentCompassDirection;
 
 	//Loop 3 times because the game only supports 4 yaw rotations (your current yaw could not move so need to check the
 	//other 3 if they are movable, there is a chance that the AI can be boxed in from walls and other AI blocking
 	//paths but I will deal with that below)
 	for (int i = 0; i < PossibleAdderYawsToMoveForward.Num(); i++)
 	{
-		//Get a temp yaw from the possible adder yaws that the player can move forward from
+		//Get a temp yaw from the possible adder yaws that the player can move forward from, This array variable is
+		//cached in the header file right above the declaration of this function
 		TempYaw = PossibleAdderYawsToMoveForward[i];
-		PotentialYaw = TempYaw + NormalizedYaw;
 
-		//Wrap the potential yaw to only have a value of 0 - 360 (- error tolerance) Could use FMod but I really want
-		//to aggressively make this as optimised as possible, I like saving the small overhead of not using the FMath
-		//class
-		if (PotentialYaw >= 360.f - RotationErrorTolerance)
-		{
-			PotentialYaw -= 360.f;
-		}
-		else if (PotentialYaw <= 0.f - RotationErrorTolerance)
-		{
-			PotentialYaw += 360.f;
-		}
+		TempCompassDirection.Set_Compass_Direction
+		(CurrentCompassDirection.Get_Possible_Compass_Direction_From_Added_X_Rotation(TempYaw));
 
 		//If I found a suitable location in which I can move forward to, add it to the random floats for the enemy to
 		//rotate to
-		if (myDungeonState->Can_Move_Forward(CurrentXY.X, CurrentXY.Y, PotentialYaw))
+		if (myDungeonState->Can_Move_Forward(CurrentXY.X, CurrentXY.Y, TempCompassDirection))
 		{
 			RandomFloatsToChoose.Add(TempYaw);
 		}
