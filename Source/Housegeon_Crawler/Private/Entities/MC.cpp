@@ -153,6 +153,8 @@ void AMC::OnMovementTimelineTick(float Alpha)
 void AMC::OnMovementTimelineFinished()
 {
 	bAbleToMove = true;
+	bAlreadyMovingForward = false;
+	bAlreadyMovingLeftRight = false;
 
 	if (bIsMovingForwardNotLeftRight) 
 	{
@@ -173,6 +175,8 @@ void AMC::OnRotate90TimelineTick(float Alpha)
 void AMC::OnRotate90TimelineFinished()
 {
 	bAbleToMove = true;
+
+	bAlreadyRotating = false;
 }
 
 void AMC::OnRotate180TimelineTick(float Alpha)
@@ -185,6 +189,8 @@ void AMC::OnRotate180TimelineTick(float Alpha)
 void AMC::OnRotate180TimelineFinished()
 {
 	bAbleToMove = true;
+
+	bAlreadyRotating = false;
 }
 
 void AMC::OnRightHandMeshMovementTimelineTick(float Alpha)
@@ -255,12 +261,19 @@ void AMC::Manual_MoveForward()
 		//Set to false so the timeline can do the movement animation, set to true on finished in BP
 		bAbleToMove = false;
 
+		bAlreadyMovingForward = true;
+
 		FVector StartLocation = GetActorLocation();
+
+		FVector EndLocation;
+		EndLocation.X = CurrentCell.X * 400.f;
+		EndLocation.Y = CurrentCell.Y * 400.f;
+		EndLocation.Z = StartLocation.Z;
 
 		//Get the end location by getting the forward vector + start location. Don't change the z as only moving on
 		//x, y axes
-		FVector EndLocation = GetActorLocation() + (GetActorForwardVector() * 400.f);
-		EndLocation.Z = StartLocation.Z;
+		//FVector EndLocation = GetActorLocation() + (GetActorForwardVector() * 400.f);
+		//EndLocation.Z = StartLocation.Z;
 
 		//Call_Move_Forward(StartLocation, EndLocation);
 
@@ -311,9 +324,9 @@ void AMC::MoveForward(const FInputActionValue& Value)
 	} 
 
 	//if already moving from another function or this, instantly return and don't do logic below
-	if (!bAbleToMove)
+	if (bAlreadyMovingForward)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING OR FIGHTING"));
+		UE_LOG(LogTemp, Warning, TEXT("Already Moving Forward!"));
 		return;
 	}
 
@@ -334,10 +347,17 @@ void AMC::MoveLeftRight(const FInputActionValue& Value)
 	}
 
 	//if already moving from another function or this, instantly return and don't do logic below
-	if (!bAbleToMove)
+	if (bAlreadyMovingLeftRight)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING OR FIGHTING"));
+		UE_LOG(LogTemp, Warning, TEXT("Already Moving Left/Right!"));
 		return;
+	}
+
+	if (bAlreadyMovingForward) 
+	{
+		/*
+			This will be diagonal movement but might not need???
+		*/
 	}
 
 	FCompassDirection TempDirection = CurrentCompassDirection;
@@ -369,10 +389,17 @@ void AMC::MoveLeftRight(const FInputActionValue& Value)
 		//stop all other movement events until the timeline is finished
 		bAbleToMove = false;
 
+		bAlreadyMovingLeftRight = true;
+
 		FVector StartLocation = GetActorLocation();
 
-		FVector EndLocation = GetActorLocation() + (GetActorRightVector() * EndLocationRightVectorAdder);
+		FVector EndLocation;
+		EndLocation.X = CurrentCell.X * 400.f;
+		EndLocation.Y = CurrentCell.Y * 400.f;
 		EndLocation.Z = StartLocation.Z;
+
+		//FVector EndLocation = GetActorLocation() + (GetActorRightVector() * EndLocationRightVectorAdder);
+		//EndLocation.Z = StartLocation.Z;
 
 		//Set a camera shake towards the player when they move to create juice into the walking
 		UGameplayStatics::PlayWorldCameraShake(
@@ -410,13 +437,13 @@ void AMC::MoveLeftRight(const FInputActionValue& Value)
 void AMC::RotateLeftRight(const FInputActionValue& Value)
 {
 	//if already moving from another function or this, instantly return and don't do logic below
-	if (!bAbleToMove)
+	if (bAlreadyRotating)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING OR FIGHTING"));
+		UE_LOG(LogTemp, Warning, TEXT("Already Rotating"));
 		return;
 	}
 
-	UE_LOG(LogTemp, Display, TEXT("Movement Left Right"));
+	UE_LOG(LogTemp, Display, TEXT("Rotate Left Right"));
 	float LeftRightChecker = Value.Get<float>();
 	FRotator Desired_Rotation = GetActorRotation();
 
@@ -447,6 +474,8 @@ void AMC::RotateLeftRight(const FInputActionValue& Value)
 	//C++ Timeline to rotate the player (I first did a BP timeline but now converted it into a C++ one)
 	bAbleToMove = false;
 
+	bAlreadyRotating = true;
+
 	//Set the start and end lerp rotations which will be used in the rotate90 timeline event
 	TimelineStartRotation = GetActorRotation();
 	TimelineEndRotation = Desired_Rotation;
@@ -467,7 +496,7 @@ void AMC::RotateLeftRight(const FInputActionValue& Value)
 void AMC::Rotate180(const FInputActionValue& Value)
 {
 	//if already moving from another function or this, instantly return and don't do logic below
-	if (!bAbleToMove)
+	if (bAlreadyRotating)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("CURRENTLY MOVING OR FIGHTING"));
 		return;
@@ -488,6 +517,8 @@ void AMC::Rotate180(const FInputActionValue& Value)
 
 	//Since an animation is going to start, I have to make able to move false so that no other inputs can intefere
 	bAbleToMove = false;
+
+	bAlreadyRotating = true;
 
 	//Set the start and end lerp rotations which will be used in the 180 timeline event
 	TimelineStartRotation = GetActorRotation();

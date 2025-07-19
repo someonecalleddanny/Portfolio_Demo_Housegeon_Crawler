@@ -70,6 +70,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "C++ Grid Movement Logic")
 	bool bAbleToMove = true;
 
+	bool bAlreadyMovingLeftRight = false;
+
+	bool bAlreadyMovingForward = false;
+
+	bool bAlreadyRotating = false;
+
 	bool bIsMovingForwardNotLeftRight;
 
 	//Camera Shakes
@@ -115,6 +121,10 @@ protected:
 
 	UPROPERTY()
 	FOnTimelineEvent RightHandMeshMovementFinished;
+
+	/*
+		BOUND TIMELINE FUNCTIONS
+	*/
 
 	UFUNCTION()
 	void OnMovementTimelineTick(float Alpha);
