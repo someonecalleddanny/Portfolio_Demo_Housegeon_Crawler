@@ -64,10 +64,7 @@ protected:
 	void Spawn_At_Center_Grid();
 
 	//Movement timeline variables
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "C++ Grid Movement Logic")
-	bool bKeepWalkingForward = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "C++ Grid Movement Logic")
 	bool bAbleToMove = true;
 
 	bool bAlreadyMovingLeftRight = false;
@@ -76,7 +73,14 @@ protected:
 
 	bool bAlreadyRotating = false;
 
-	bool bIsMovingForwardNotLeftRight;
+	bool bPathBlockedButPossibleDiagonal = false;
+
+	bool bMoveForwardInputStillHeldDown = false;
+
+	float MovementLeftRightChecker = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "C++ Grid Movement Logic")
+	float DiagonalMovementAcceptanceDelay = 0.1f;
 
 	//Camera Shakes
 
@@ -150,6 +154,8 @@ protected:
 	UFUNCTION()
 	void OnRightHandMeshMovementTimelineFinished();
 
+	//Movement logic
+
 	/*
 		Might be confusing why there are 3 different move forwards, but this is the one that actually moves forward.
 		Have this confusion because I want the player to keep moving when move forward key is pressed which means I need
@@ -158,15 +164,11 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "C++ Functions")
 	void Manual_MoveForward();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "C++ Events")
-	void Call_Move_Forward(FVector BeforeLocation, FVector DesiredLocation);
+	void Manual_MoveLeftRight();
 
-	//Blueprint Called Events
-	UFUNCTION(BlueprintImplementableEvent, Category = "C++ Events")
-	void Call_Rotate_90(FRotator BeforeRotation, FRotator DesiredRotation);
+	FTimerHandle TH_DelayedDiagonalFromPossibleBlockedPath;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "C++ Events")
-	void Call_Rotate_180(FRotator BeforeRotation, FRotator DesiredRotation);
+	void Timer_DelayedBlockedDiagonalChecker();
 
 	//All the Input stuff
 	UPROPERTY()

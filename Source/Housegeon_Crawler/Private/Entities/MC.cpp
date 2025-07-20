@@ -155,13 +155,11 @@ void AMC::OnMovementTimelineFinished()
 	bAbleToMove = true;
 	bAlreadyMovingForward = false;
 	bAlreadyMovingLeftRight = false;
+	bPathBlockedButPossibleDiagonal = false;
 
-	if (bIsMovingForwardNotLeftRight) 
+	if (bMoveForwardInputStillHeldDown)
 	{
-		if (bKeepWalkingForward)
-		{
-			Manual_MoveForward();
-		}
+		Manual_MoveForward();
 	}
 }
 
@@ -303,72 +301,41 @@ void AMC::Manual_MoveForward()
 			UE_LOG(LogTemp, Error, TEXT("Timeline Not Valid"));
 		}
 		
+		//So move Left/Right has been blocked, but is waiting for a possible diagonal, You have moved forward right now
+		// There is a very tiny, extremely, small chance that in the ~0.1 second delay something has moved to that cell
+		// So check again to see if can move Left/Right whilst moving along the current timeline. If a genuine wall, nothing
+		// happens
+		if (bPathBlockedButPossibleDiagonal)
+		{
+			//Don't forget to make false or will keep moving diagonally until there's a blocked space
+			bPathBlockedButPossibleDiagonal = false;
+
+			//Since already made the bool above false, no need to have the timer below which does the same thing
+			//AND Setting false above is necessary!!!
+			GetWorldTimerManager().ClearTimer(TH_DelayedDiagonalFromPossibleBlockedPath);
+
+			Manual_MoveLeftRight();
+		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Forward path blocked, can't move forward"))
+		UE_LOG(LogTemp, Warning, TEXT("Forward path blocked, Waiting for possible diagonal"));
+
+		bPathBlockedButPossibleDiagonal = true;
+
+		GetWorldTimerManager().SetTimer(TH_DelayedDiagonalFromPossibleBlockedPath, this,
+			&AMC::Timer_DelayedBlockedDiagonalChecker, DiagonalMovementAcceptanceDelay);
 	}
 }
 
-void AMC::MoveForward(const FInputActionValue& Value)
+void AMC::Manual_MoveLeftRight()
 {
-	//Used for timelines, once forward lerp is finished, if the move forward key is still pressed, it will call movement
-	//again, This does assume that the IA class has the OnPressed + OnReleased trigger
-	bKeepWalkingForward = Value.Get<bool>();
-
-	//the whole movement logic relies on the game state, so instantly shoot red flags if not valid
-	if (!myDungeonState) 
-	{
-		UE_LOG(LogTemp, Error, TEXT("Dungeon Game State not found!!!"));
-		return;
-	} 
-
-	//if already moving from another function or this, instantly return and don't do logic below
-	if (bAlreadyMovingForward)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Already Moving Forward!"));
-		return;
-	}
-
-	//Used when the movement timeline is finished as I need to check if I was moving forward or left/right
-	bIsMovingForwardNotLeftRight = true;
-
-	//Call the C++ logic to move forward
-	Manual_MoveForward();
-}
-
-void AMC::MoveLeftRight(const FInputActionValue& Value)
-{
-	//the whole movement logic relies on the game state, so instantly shoot red flags if not valid
-	if (!myDungeonState)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Dungeon Game State not found!!!"));
-		return;
-	}
-
-	//if already moving from another function or this, instantly return and don't do logic below
-	if (bAlreadyMovingLeftRight)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Already Moving Left/Right!"));
-		return;
-	}
-
-	if (bAlreadyMovingForward) 
-	{
-		/*
-			This will be diagonal movement but might not need???
-		*/
-	}
-
 	FCompassDirection TempDirection = CurrentCompassDirection;
-
-	//Used when the movement timeline is finished as I need to check if I was moving forward or left/right
-	bIsMovingForwardNotLeftRight = false;
 
 	float EndLocationRightVectorAdder = 400.f;
 
 	//Clicked input to move left
-	if (Value.Get<float>() < 0.f) 
+	if (MovementLeftRightChecker < 0.f)
 	{
 		TempDirection.Rotate_By_X_Amount(-90.f);
 
@@ -381,7 +348,7 @@ void AMC::MoveLeftRight(const FInputActionValue& Value)
 	}
 
 	//Use the temp direction as I am not updating the current compass direction as I am moving from one cell in this function
-	if (myDungeonState->Can_Move_Forward(CurrentCell.X, CurrentCell.Y, TempDirection)) 
+	if (myDungeonState->Can_Move_Forward(CurrentCell.X, CurrentCell.Y, TempDirection))
 	{
 		//x and y get passed in as reference so they get updated when moving from one cell to the other
 		myDungeonState->Moving_Forward(this, CurrentCell.X, CurrentCell.Y, TempDirection);
@@ -427,11 +394,87 @@ void AMC::MoveLeftRight(const FInputActionValue& Value)
 			UE_LOG(LogTemp, Error, TEXT("Timeline Not Valid"));
 		}
 
+		//So move forward has been blocked, but is waiting for a possible diagonal, You have moved left right now
+		// There is a very tiny, extremely, small chance that in the ~0.1 second delay something has moved to that cell
+		// So check again to see if can move forward whilst moving along the current timeline. If a genuine wall, nothing
+		// happens
+		if (bPathBlockedButPossibleDiagonal) 
+		{
+			//Don't forget to make false or will keep moving diagonally until there's a blocked space
+			bPathBlockedButPossibleDiagonal = false;
+
+			//Since already made the bool above false, no need to have the timer below which does the same thing
+			//AND Setting false above is necessary!!!
+			GetWorldTimerManager().ClearTimer(TH_DelayedDiagonalFromPossibleBlockedPath);
+
+			Manual_MoveForward();
+		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Forward path blocked, can't move forward"))
+		UE_LOG(LogTemp, Warning, TEXT("Left Right path blocked, Waiting for possible diagonal"));
+
+		bPathBlockedButPossibleDiagonal = true;
+
+		GetWorldTimerManager().SetTimer(TH_DelayedDiagonalFromPossibleBlockedPath, this,
+			&AMC::Timer_DelayedBlockedDiagonalChecker, DiagonalMovementAcceptanceDelay);
 	}
+}
+
+void AMC::Timer_DelayedBlockedDiagonalChecker()
+{
+	//Have a timer event that checks if a diagonal movement is possible if a path is blocked. i.e w+d may work but
+	// d + w might not work because the d has a blocked path. So, delay the two inputs for this majiggy to work.
+	bPathBlockedButPossibleDiagonal = false;
+
+	UE_LOG(LogTemp, Warning, TEXT("Possible Diagonal timer has finished!"));
+}
+
+void AMC::MoveForward(const FInputActionValue& Value)
+{
+	//Used for timelines, once forward lerp is finished, if the move forward key is still pressed, it will call movement
+	//again, This does assume that the IA class has the OnPressed + OnReleased trigger
+	bMoveForwardInputStillHeldDown = Value.Get<bool>();
+
+	if (!bMoveForwardInputStillHeldDown) return;
+
+	//the whole movement logic relies on the game state, so instantly shoot red flags if not valid
+	if (!myDungeonState) 
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dungeon Game State not found!!!"));
+		return;
+	} 
+
+	//if already moving from another function or this, instantly return and don't do logic below
+	if (bAlreadyMovingForward)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Already Moving Forward!"));
+		return;
+	}
+
+	//Call the C++ logic to move forward
+	Manual_MoveForward();
+}
+
+void AMC::MoveLeftRight(const FInputActionValue& Value)
+{
+	//the whole movement logic relies on the game state, so instantly shoot red flags if not valid
+	if (!myDungeonState)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Dungeon Game State not found!!!"));
+		return;
+	}
+
+	//if already moving from another function or this, instantly return and don't do logic below
+	if (bAlreadyMovingLeftRight)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Already Moving Left/Right!"));
+		return;
+	}
+
+	MovementLeftRightChecker = Value.Get<float>();
+
+	Manual_MoveLeftRight();
 }
 
 void AMC::RotateLeftRight(const FInputActionValue& Value)
