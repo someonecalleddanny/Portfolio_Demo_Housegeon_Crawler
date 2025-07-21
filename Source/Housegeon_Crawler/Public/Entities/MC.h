@@ -67,17 +67,35 @@ protected:
 
 	bool bAbleToMove = true;
 
+	//OnFinished Timeline variables for movement
 	bool bAlreadyMovingLeftRight = false;
 
 	bool bAlreadyMovingForward = false;
 
+	//Rotation input logic
 	bool bAlreadyRotating = false;
 
+	bool bRotate90StillHeldDown = false;
+
+	bool bRotate90WaitingForRelease = false;
+
+	//Forward, backward, left, right and diagonal logic
 	bool bPathBlockedButPossibleDiagonal = false;
 
 	bool bMoveForwardInputStillHeldDown = false;
 
+	bool bMoveForwardBackwardWaitingForRelease = false;
+
+	bool bMoveLeftRightInputStillHeldDown = false;
+
+	bool bMoveLeftRightWaitingForRelease = false;
+
+	//Input reader variables
 	float MovementLeftRightChecker = 0.f;
+
+	float MovementForwardBackwardChecker = 0.f;
+
+	float RotationLeftRightChecker = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "C++ Grid Movement Logic")
 	float DiagonalMovementAcceptanceDelay = 0.1f;
@@ -166,6 +184,8 @@ protected:
 
 	void Manual_MoveLeftRight();
 
+	void Manual_Rotate90();
+
 	FTimerHandle TH_DelayedDiagonalFromPossibleBlockedPath;
 
 	void Timer_DelayedBlockedDiagonalChecker();
@@ -178,7 +198,7 @@ protected:
 	UInputMappingContext* myMappingContext;
 
 	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
-	UInputAction* IA_MoveForward;
+	UInputAction* IA_MoveForwardAndBackward;
 
 	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
 	UInputAction* IA_MoveLeftRight;
@@ -195,7 +215,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "C++ Inputs")
 	UInputAction* IA_RightAttack;
 
-	void MoveForward(const FInputActionValue& Value);
+	//bound input functions
+
+	void MoveForwardAndBackward(const FInputActionValue& Value);
 	void MoveLeftRight(const FInputActionValue& Value);
 	void RotateLeftRight(const FInputActionValue& Value);
 	void Rotate180(const FInputActionValue& Value);
