@@ -10,15 +10,18 @@ struct FCompassDirection
 	{
 		/*
 			IF ADDING OR REMOVING NEW DIRECTIONS, MAKE UNIFORM!
+
+			(For now don't need 45 degree angles, might change later down development but because I have the compass size
+			this system auto resizes)
 		*/
 		North,
-		NorthEast,
+		//NorthEast,
 		East,
-		SouthEast,
+		//SouthEast,
 		South,
-		SouthWest,
+		//SouthWest,
 		West,
-		NorthWest,
+		//NorthWest,
 		//Use this instead of a manual getter because this, technically, auto sizes if I put more directions behind this
 		Compass_Size_For_Modulus_Wrapping_Rotation
 	};

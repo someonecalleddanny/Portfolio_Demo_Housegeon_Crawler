@@ -152,7 +152,6 @@ void AMC::OnMovementTimelineTick(float Alpha)
 
 void AMC::OnMovementTimelineFinished()
 {
-	bAbleToMove = true;
 	bAlreadyMovingForward = false;
 	bAlreadyMovingLeftRight = false;
 	bPathBlockedButPossibleDiagonal = false;
@@ -200,8 +199,6 @@ void AMC::OnRotate180TimelineTick(float Alpha)
 
 void AMC::OnRotate180TimelineFinished()
 {
-	bAbleToMove = true;
-
 	bAlreadyRotating = false;
 }
 
@@ -282,9 +279,6 @@ void AMC::Manual_MoveForward()
 	//meaning the x and y values will be changed
 	myDungeonState->Moving_Forward(this, CurrentCell.X, CurrentCell.Y, TempDirection);
 
-	//Set to false so the timeline can do the movement animation, set to true on finished in BP
-	bAbleToMove = false;
-
 	bAlreadyMovingForward = true;
 
 	FVector StartLocation = GetActorLocation();
@@ -356,9 +350,6 @@ void AMC::Manual_MoveLeftRight()
 	{
 		//x and y get passed in as reference so they get updated when moving from one cell to the other
 		myDungeonState->Moving_Forward(this, CurrentCell.X, CurrentCell.Y, TempDirection);
-
-		//stop all other movement events until the timeline is finished
-		bAbleToMove = false;
 
 		bAlreadyMovingLeftRight = true;
 
@@ -617,9 +608,6 @@ void AMC::Rotate180(const FInputActionValue& Value)
 
 	//Old Code when I had bp timeline logic
 	//Call_Rotate_180(GetActorRotation(), Desired_Rotation);
-
-	//Since an animation is going to start, I have to make able to move false so that no other inputs can intefere
-	bAbleToMove = false;
 
 	bAlreadyRotating = true;
 

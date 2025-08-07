@@ -65,8 +65,6 @@ protected:
 
 	//Movement timeline variables
 
-	bool bAbleToMove = true;
-
 	//OnFinished Timeline variables for movement
 	bool bAlreadyMovingLeftRight = false;
 
