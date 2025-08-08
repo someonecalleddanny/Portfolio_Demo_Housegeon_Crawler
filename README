@@ -1,0 +1,29 @@
+Procedural Dungeon Crawler Demo
+This repository contains an early build of a future planned commercial procedural dungeon crawler game showcasing my custom algorithm for dungeon generation and an optimized, lightweight collision system designed to outperform the default Unreal Engine solution. It also showcases an early build of my custom optimised AI system that implements 
+batching to allow for 100+ Enemies to patrol the dungeon without a significant cost to performance.
+
+Project Overview
+Procedural Dungeon Generation: An algorithm that dynamically creates dungeon layouts with varied room and corridor structures.
+
+Optimized Collision System: A custom collision system optimized for performance and lower resource usage compared to the standard Unreal Engine implementation.
+
+Player Movement: Basic player movement along the generated dungeon paths, demonstrating functional integration.
+
+AI System: The AI system is designed for efficiency and scalability. All AI entities send batch packets of their state and behavior requests to a centralized AI manager. 
+This manager processes these packets collectively, significantly reducing the computational overhead compared to handling each AI individually.
+The centralized manager is responsible for executing patrol behaviors, coordinating enemy movements, and managing AI states, enabling smooth performance even with 100+ enemies simultaneously patrolling the dungeon.
+
+3D Models and Assets: Includes original 3D models and related assets created to support the project.
+
+This demo serves as a portfolio piece to showcase my problem-solving and technical skills in game development and algorithm design.
+
+License
+All rights reserved. This code and all assets—including 3D models, textures, and other related content—are provided for demonstration and educational purposes only. The 2d placement sprites and 3d sword model were not created by me and serve as a temporary solution as I further develop this project. 
+Credits:
+- https://ansimuz.itch.io/gothicvania-patreon-collection
+- https://crimsongcat.itch.io/psx-sword-espada-ps1
+
+No part of this repository may be copied, modified, distributed, or used for commercial purposes without the explicit written permission of the author.
+
+Contact
+For inquiries or permission requests, please contact: dannymillsgamedev@gmail.com
